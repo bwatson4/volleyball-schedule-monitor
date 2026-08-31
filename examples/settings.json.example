@@ -1,0 +1,12 @@
+{
+  "team_names": [
+    "Example Volleyball Team"
+  ],
+  "schedule_match_text": "Wednesday",
+  "gyms": [
+    "Example Community Centre"
+  ],
+  "email_recipients": [
+    "player@example.com"
+  ]
+}

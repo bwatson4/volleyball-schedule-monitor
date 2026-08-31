@@ -1,0 +1,43 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+!*.example
+*.pem
+*.key
+credentials*
+secrets*
+
+# Python
+.venv/
+venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Application runtime data
+runtime/
+state/
+data/
+logs/
+*.log
+settings.json
+state.json
+health.json
+calendar_cache.json
+schedule_state.json
+*.corrupt
+
+# Downloaded schedules and temporary files
+*.pdf
+*.pdf.tmp
+*.tmp
+
+# Editor and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

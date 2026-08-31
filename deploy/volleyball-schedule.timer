@@ -1,0 +1,10 @@
+[Unit]
+Description=Run volleyball schedule monitor every 30 minutes
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=30min
+Persistent=true
+RandomizedDelaySec=2min
+Unit=volleyball-schedule.service
+[Install]
+WantedBy=timers.target

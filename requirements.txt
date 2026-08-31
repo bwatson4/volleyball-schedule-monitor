@@ -1,0 +1,6 @@
+# Runtime dependencies only. Test tools belong in requirements-dev.txt.
+beautifulsoup4>=4.12,<5
+caldav>=2.0,<3
+icalendar>=6.0,<7
+pdfplumber>=0.11,<1
+requests>=2.31,<3

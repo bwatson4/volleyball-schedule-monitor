@@ -1,0 +1,16 @@
+[Unit]
+Description=Volleyball schedule monitor
+Wants=NetworkManager.service
+After=NetworkManager.service
+[Service]
+Type=oneshot
+User=volleyball
+Group=volleyball
+WorkingDirectory=/opt/volleyball-schedule-monitor
+EnvironmentFile=/etc/volleyball-schedule-monitor.env
+ExecStart=/usr/bin/flock -n /run/volleyball-schedule-monitor.lock /opt/volleyball-schedule-monitor/.venv/bin/python /opt/volleyball-schedule-monitor/main.py
+TimeoutStartSec=5min
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=yes
+PrivateTmp=yes

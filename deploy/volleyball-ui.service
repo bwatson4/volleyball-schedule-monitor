@@ -1,0 +1,15 @@
+[Unit]
+Description=Volleyball monitor local configuration UI
+Wants=NetworkManager.service
+After=NetworkManager.service
+[Service]
+User=volleyball
+Group=volleyball
+WorkingDirectory=/opt/volleyball-schedule-monitor
+EnvironmentFile=/etc/volleyball-schedule-monitor.env
+ExecStart=/opt/volleyball-schedule-monitor/.venv/bin/python /opt/volleyball-schedule-monitor/ui.py
+Restart=on-failure
+NoNewPrivileges=yes
+PrivateTmp=yes
+[Install]
+WantedBy=multi-user.target
