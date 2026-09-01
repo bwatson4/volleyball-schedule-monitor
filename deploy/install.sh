@@ -31,7 +31,9 @@ if ! command -v apt-get >/dev/null; then
 fi
 
 apt-get update
-apt-get install -y --no-install-recommends python3 python3-venv python3-pip ca-certificates
+# Runtime libraries required by lxml (used by caldav). apt-get install is
+# idempotent, and these are runtime packages rather than development headers.
+apt-get install -y --no-install-recommends python3 python3-venv python3-pip ca-certificates libxslt1.1 libxml2
 
 if ! id -u "$SERVICE_USER" >/dev/null 2>&1; then
   useradd --system --home "$APP_DIR" --shell /usr/sbin/nologin "$SERVICE_USER"

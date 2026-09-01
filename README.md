@@ -15,6 +15,8 @@ the Pi.
   system. Raspberry Pi OS Lite 32-bit is recommended for Zero W compatibility.
 - Python 3 with `venv`, Internet access for schedule/calendar/email work, and
   NetworkManager (`nmcli`) when using Wi-Fi provisioning.
+- Debian/Raspberry Pi OS runtime libraries `libxslt1.1` and `libxml2` (the
+  installer installs these automatically for the `lxml`/CalDAV dependency).
 - A CalDAV account and an SMTP account with app passwords, if calendar and
   email notifications are enabled.
 
