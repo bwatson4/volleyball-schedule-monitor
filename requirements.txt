@@ -2,5 +2,5 @@
 beautifulsoup4>=4.12,<5
 caldav>=2.0,<3
 icalendar>=6.0,<7
-pdfminer.six>=20231228,<2026
+pdfminer.six>=20231228,<20270101
 requests>=2.31,<3
