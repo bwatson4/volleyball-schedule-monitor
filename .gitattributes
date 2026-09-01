@@ -1,2 +1,12 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# Linux deployment files must retain Unix LF line endings.
+*.sh text eol=lf
+*.service text eol=lf
+*.timer text eol=lf
+*.py text eol=lf
+
+# Documentation/configuration text.
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
