@@ -31,7 +31,7 @@ def test_fresh_settings_require_schedule_match_text(monkeypatch, tmp_path):
 def test_ui_identifies_schedule_match_text_as_required(monkeypatch, tmp_path):
     monkeypatch.setenv("SETTINGS_FILE", str(tmp_path / "settings.json"))
     monkeypatch.delenv("SCHEDULE_MATCH_TEXT", raising=False)
-    page = _page()
+    page = _page(view="settings")
     assert "This field is required before schedule processing can run." in page
     assert 'name="schedule_match_text"' in page and "required" in page
     assert 'value="save_schedule_match_text"' in page
@@ -68,7 +68,7 @@ def test_ui_forms_have_unambiguous_add_and_remove_actions(monkeypatch, tmp_path)
     monkeypatch.setenv("SETTINGS_FILE", str(tmp_path / "settings.json"))
     monkeypatch.setenv("SCHEDULE_MATCH_TEXT", "Wednesday")
     save({**sample_settings(), "schedule_match_text": "Wednesday"})
-    page = _page()
+    page = _page(view="settings")
     assert 'formaction="?action=' not in page
     assert page.count('name="action" value="add_team_name"') == 1
     assert page.count('name="action" value="add_gym"') == 1
@@ -86,3 +86,22 @@ def test_dashboard_model_selects_next_game_and_aggregates_pool_gym_and_time():
     data = _dashboard_model(history, datetime(2026, 9, 2))
     assert data["next"]["pool"] == "A POOL"
     assert data["gyms"]["A Gym"] == 2 and data["times"]["19:00"] == 2 and data["pools"]["A POOL"] == 1
+
+
+def test_dashboard_model_uses_latest_current_revision_but_keeps_pool_history():
+    old = {"logical_id": "game", "game_date": "2026-09-08", "start_time": "2026-09-08T19:00:00", "end_time": "2026-09-08T20:00:00", "gym": "Old", "pool": "C POOL", "pool_position": "3", "detected_at": "2026-08-01T00:00:00+00:00"}
+    latest = old | {"start_time": "2026-09-08T20:00:00", "end_time": "2026-09-08T21:00:00", "gym": "New", "pool": "B POOL", "pool_position": "2", "detected_at": "2026-08-15T00:00:00+00:00"}
+    data = _dashboard_model({"current_games": [latest], "analytics_games": [latest], "pool_observations": [old, latest], "revisions": []}, datetime(2026, 9, 1))
+    assert data["next"]["gym"] == "New" and len(data["current_upcoming"]) == 1
+    assert [item["pool"] for item in data["pool_observations"]] == ["C POOL", "B POOL"]
+
+
+def test_home_history_and_settings_views_have_navigation_active_state_and_escape(monkeypatch):
+    monkeypatch.setattr("ui._state", lambda: {"last_website_scan": "2026-08-31T21:27:00+00:00"})
+    monkeypatch.setattr("ui._ui_settings", lambda: {"team_names": ["<team>"], "schedule_match_text": "Wednesday", "gyms": [], "email_recipients": ["x@example.com"]})
+    monkeypatch.setattr("ui._history", lambda: {"revisions": [{"detected_at": "2026-08-31T21:00:00+00:00", "source_url": "https://example/?x=<bad>", "parsed_at": None, "calendar_at": None, "email_at": None, "completed_at": None}], "current_games": [], "analytics_games": [], "pool_observations": [], "games": []})
+    home, history, settings = _page(), _page(view="history"), _page(view="settings")
+    assert "Next Game" in home and 'aria-current="page">Home' in home
+    assert "Operational History" in history and 'aria-current="page">History' in history and "Open PDF" in history
+    assert "Schedule Selection" in settings and 'aria-current="page">Settings' in settings
+    assert "&lt;team&gt;" in settings and "&lt;bad&gt;" in history

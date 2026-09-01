@@ -76,10 +76,29 @@ class HistoryStore:
             db.execute(f"UPDATE schedule_revision SET {column}=COALESCE({column}, ?) WHERE content_hash=?", (at, content_hash))
 
     def dashboard(self) -> dict:
-        """Return lightweight data for the LAN UI without leaking hashes."""
+        """Return explicit current, deduplicated and historical UI datasets.
+
+        ``current_games`` comes only from the most recently detected revision
+        that parsed successfully.  ``analytics_games`` is one latest
+        observation per logical session across all successful revisions.
+        ``pool_observations`` deliberately retains every revision observation.
+        This makes semantics a data-layer contract rather than a UI accident.
+        """
         with self._connect() as db:
             revisions = [dict(row) for row in db.execute("SELECT * FROM schedule_revision ORDER BY detected_at DESC")]
             games = [dict(row) for row in db.execute("""SELECT g.*, r.detected_at FROM parsed_game g
                 JOIN schedule_revision r ON r.content_hash=g.content_hash
                 ORDER BY game_date, start_time""")]
-        return {"revisions": revisions, "games": games}
+            latest = db.execute("""SELECT content_hash FROM schedule_revision
+                WHERE parsed_at IS NOT NULL ORDER BY detected_at DESC LIMIT 1""").fetchone()
+            current_games = [] if latest is None else [dict(row) for row in db.execute("""SELECT g.*, r.detected_at
+                FROM parsed_game g JOIN schedule_revision r ON r.content_hash=g.content_hash
+                WHERE g.content_hash=? ORDER BY game_date, start_time""", (latest["content_hash"],))]
+            analytics_games = [dict(row) for row in db.execute("""SELECT * FROM (
+                SELECT g.*, r.detected_at,
+                  ROW_NUMBER() OVER (PARTITION BY g.logical_id ORDER BY r.detected_at DESC) AS observation_rank
+                FROM parsed_game g JOIN schedule_revision r ON r.content_hash=g.content_hash
+                WHERE r.parsed_at IS NOT NULL
+            ) WHERE observation_rank=1 ORDER BY game_date, start_time""")]
+        return {"revisions": revisions, "games": games, "current_games": current_games,
+                "analytics_games": analytics_games, "pool_observations": games}

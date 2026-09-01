@@ -20,3 +20,27 @@ def test_revision_is_deduplicated_by_content_hash_and_stages_are_retained(tmp_pa
     assert data["revisions"][0]["source_url"] == "https://first"
     assert data["revisions"][0]["calendar_at"]
     assert data["games"][0]["pool_position"] == "1"
+
+
+def test_current_schedule_deduplicated_analytics_and_pool_observations(tmp_path):
+    store = HistoryStore(tmp_path / "history.sqlite3")
+    first = game("C POOL", "4")
+    changed = game("B POOL", "2") | {"start": datetime(2026, 9, 9, 20), "end": datetime(2026, 9, 9, 21), "gym": "New Gym"}
+    removed = game("A POOL", "1") | {"uid": "volleyball-schedule-monitor-20260916-example-1", "date": "2026-09-16"}
+    for digest, at, events in (("one", "2026-08-01T00:00:00+00:00", [first, removed]),
+                               ("two", "2026-08-08T00:00:00+00:00", [first, removed]),
+                               ("three", "2026-08-15T00:00:00+00:00", [changed])):
+        store.detect(digest, at, "https://example/" + digest)
+        store.record_events(digest, events, at)
+    data = store.dashboard()
+    # The newest parsed revision is the only current schedule; removed games
+    # do not leak forward from an older PDF.
+    assert [row["logical_id"] for row in data["current_games"]] == [changed["uid"]]
+    # Three weekly PDFs still yield one logical session in analytics, using its
+    # latest gym/time observation rather than fabricating played sessions.
+    assert len(data["analytics_games"]) == 2
+    latest = next(row for row in data["analytics_games"] if row["logical_id"] == changed["uid"])
+    assert latest["gym"] == "New Gym" and latest["start_time"].endswith("20:00:00")
+    assert sum(row["logical_id"] == changed["uid"] for row in data["analytics_games"]) == 1
+    # Movement is intentionally different: each weekly pool observation stays.
+    assert [row["pool"] for row in data["pool_observations"] if row["logical_id"] == changed["uid"]] == ["C POOL", "C POOL", "B POOL"]
