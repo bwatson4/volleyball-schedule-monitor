@@ -81,7 +81,8 @@ class HistoryStore:
         ``current_games`` comes only from the most recently detected revision
         that parsed successfully.  ``analytics_games`` is one latest
         observation per logical session across all successful revisions.
-        ``pool_observations`` deliberately retains every revision observation.
+        ``pool_observations`` uses the same one-point-per-session dataset for
+        Pool Movement, while ``games`` retains every parsed revision row.
         This makes semantics a data-layer contract rather than a UI accident.
         """
         with self._connect() as db:
@@ -101,4 +102,4 @@ class HistoryStore:
                 WHERE r.parsed_at IS NOT NULL
             ) WHERE observation_rank=1 ORDER BY game_date, start_time""")]
         return {"revisions": revisions, "games": games, "current_games": current_games,
-                "analytics_games": analytics_games, "pool_observations": games}
+                "analytics_games": analytics_games, "pool_observations": analytics_games}

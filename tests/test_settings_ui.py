@@ -88,12 +88,19 @@ def test_dashboard_model_selects_next_game_and_aggregates_pool_gym_and_time():
     assert data["gyms"]["A Gym"] == 2 and data["times"]["19:00"] == 2 and data["pools"]["A POOL"] == 1
 
 
-def test_dashboard_model_uses_latest_current_revision_but_keeps_pool_history():
+def test_dashboard_model_uses_latest_current_revision_and_deduplicates_pool_movement():
     old = {"logical_id": "game", "game_date": "2026-09-08", "start_time": "2026-09-08T19:00:00", "end_time": "2026-09-08T20:00:00", "gym": "Old", "pool": "C POOL", "pool_position": "3", "detected_at": "2026-08-01T00:00:00+00:00"}
     latest = old | {"start_time": "2026-09-08T20:00:00", "end_time": "2026-09-08T21:00:00", "gym": "New", "pool": "B POOL", "pool_position": "2", "detected_at": "2026-08-15T00:00:00+00:00"}
     data = _dashboard_model({"current_games": [latest], "analytics_games": [latest], "pool_observations": [old, latest], "revisions": []}, datetime(2026, 9, 1))
     assert data["next"]["gym"] == "New" and len(data["current_upcoming"]) == 1
-    assert [item["pool"] for item in data["pool_observations"]] == ["C POOL", "B POOL"]
+    assert [item["pool"] for item in data["pool_observations"]] == ["B POOL"]
+
+
+def test_pool_movement_chart_labels_one_point_per_weekly_game():
+    from ui import _pool_chart
+
+    chart = _pool_chart([{"pool": "C POOL", "pool_position": "3", "detected_at": "2026-08-01T00:00:00+00:00"}])
+    assert "One point per weekly game" in chart
 
 
 def test_home_history_and_settings_views_have_navigation_active_state_and_escape(monkeypatch):
