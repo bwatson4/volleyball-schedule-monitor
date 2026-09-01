@@ -100,3 +100,17 @@ def test_alias_choice_does_not_change_stable_event_identity():
     one = ScheduleParser(text, team_names=["Example Team 2"], gyms=["Example Gym"], pools=["A POOL"]).parse()[0]
     two = ScheduleParser(text, team_names=["Example Team", "Example Team 2"], gyms=["Example Gym"], pools=["A POOL"]).parse()[0]
     assert one["uid"] == two["uid"]
+
+
+@pytest.mark.parametrize("heading, expected", [("A POOL", "A POOL"), ("H POOL", "H POOL"), ("I POOL", "I POOL")])
+def test_dynamic_kva_pool_headings_preserve_source_label(heading, expected):
+    from src.parser import ScheduleParser
+    text = f"Example Gym December 3, 2026\n{heading}\n1 Example Team 7:00-8:00"
+    event = ScheduleParser(text, team_names=["Example Team"], gyms=["Example Gym"]).parse()[0]
+    assert event["pool"] == expected and event["pool_position"] == "1"
+
+
+def test_non_pool_line_does_not_become_a_pool_heading():
+    from src.parser import ScheduleParser
+    parser = ScheduleParser("A POOL PARTY", team_names=["Example"], gyms=[])
+    assert parser.detect_pool("A POOL PARTY") is False

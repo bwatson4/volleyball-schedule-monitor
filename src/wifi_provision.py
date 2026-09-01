@@ -145,6 +145,9 @@ class NetworkManager:
                   "connection.autoconnect", "no", "connection.autoconnect-priority", "-999",
                   "802-11-wireless.mode", "ap", "802-11-wireless.band", "bg",
                   "802-11-wireless-security.key-mgmt", "wpa-psk",
+                  # Raspberry Pi OS Trixie / Pi Zero W: explicitly disable PMF
+                  # (nmcli value 1) or secure shared-mode activation can time out.
+                  "802-11-wireless-security.pmf", "1",
                   "ipv4.method", "shared", "ipv4.addresses", "192.168.4.1/24",
                   "ipv6.method", "ignore")
         self._activate_with_password("--wait", "25", "connection", "up", "id", AP_CONNECTION,
@@ -218,7 +221,7 @@ def _portal_page(networks: list[dict[str, str]], message: str = "") -> str:
     note = "" if networks else "<p>Enter the network name manually if no networks are listed.</p>"
     result = f'<p class="message">{html.escape(message)}</p>' if message else ""
     return f'''<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VolleyballPi Wi-Fi setup</title><style>body{{font:16px sans-serif;max-width:32rem;margin:2rem auto;padding:0 1rem}}label,input,select,button{{display:block;width:100%;box-sizing:border-box;margin:.45rem 0}}input,select,button{{padding:.7rem}}.message{{color:#063}}</style></head><body>
+<title>VolleyballPi Wi-Fi Setup</title><style>body{{font:16px sans-serif;max-width:32rem;margin:2rem auto;padding:0 1rem}}label,input,select,button{{display:block;width:100%;box-sizing:border-box;margin:.45rem 0}}input,select,button{{padding:.7rem}}.message{{color:#063}}</style></head><body>
 <h1>Connect VolleyballPi to Wi-Fi</h1>{result}{note}<form method="post">
 <label>Visible network <select name="listed_ssid"><option value="">Choose or enter below</option>{options}</select></label>
 <label>Network name (for hidden networks) <input name="ssid" maxlength="32" autocomplete="off"></label>
@@ -247,6 +250,17 @@ class ProvisioningPortal:
                 self.wfile.write(encoded)
 
             def do_GET(self) -> None:  # noqa: N802
+                # Captive-network checks must not receive a false Internet
+                # success. A redirect is understood by Apple, Android and
+                # Windows; ordinary and unknown paths still show the form.
+                if self.path.split("?", 1)[0] in {
+                    "/generate_204", "/gen_204", "/hotspot-detect.html",
+                    "/library/test/success.html", "/connecttest.txt", "/ncsi.txt",
+                }:
+                    self.send_response(302)
+                    self.send_header("Location", "/")
+                    self.end_headers()
+                    return
                 self._send(_portal_page(portal.controller.network.scan()))
 
             def do_POST(self) -> None:  # noqa: N802

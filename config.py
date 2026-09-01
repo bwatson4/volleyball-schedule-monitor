@@ -16,6 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent
 RUNTIME_DIR = Path(env_str("RUNTIME_DIR", str(BASE_DIR / "runtime")))
 STATE_FILE = RUNTIME_DIR / "schedule_state.json"
 PDF_DIR = RUNTIME_DIR / "pdfs"
+HISTORY_FILE = RUNTIME_DIR / "history.sqlite3"
 PAGE_URL = env_str("PAGE_URL", "https://kvapack.ca/adult-indoor/")
 KEYWORD = env_str("KEYWORD", "wednesday night")
 PDF_MAX_BYTES = int(env_str("PDF_MAX_BYTES", "8388608"))
@@ -33,4 +34,6 @@ if not EMAIL_RECIPIENTS: raise RuntimeError("EMAIL_RECIPIENTS must contain at le
 if any("@" not in address for address in EMAIL_RECIPIENTS): raise RuntimeError("EMAIL_RECIPIENTS contains an invalid address")
 HEADERS = {"User-Agent": "volleyball-schedule-monitor/1.0"}
 TIME_FORMAT = env_str("TIME_FORMAT", "12 Hour")
+# Kept as a backwards-compatible default for callers that pass explicit pools.
+# KVA headings are detected dynamically by ScheduleParser.
 POOLS = [f"{letter} POOL" for letter in "ABCDEFGH"]

@@ -1,9 +1,10 @@
 import json
+from datetime import datetime
 
 import pytest
 
 from src.settings import load, save, validate
-from ui import _page, apply_changes
+from ui import _dashboard_model, _page, apply_changes
 
 
 def sample_settings():
@@ -75,3 +76,13 @@ def test_ui_forms_have_unambiguous_add_and_remove_actions(monkeypatch, tmp_path)
     assert page.count('name="action" value="remove_team_name"') == 1
     assert page.count('name="action" value="remove_gym"') == 1
     assert page.count('name="action" value="remove_email"') == 1
+
+
+def test_dashboard_model_selects_next_game_and_aggregates_pool_gym_and_time():
+    history = {"revisions": [], "games": [
+        {"game_date": "2026-09-01", "start_time": "2026-09-01T19:00:00", "end_time": "2026-09-01T20:00:00", "gym": "A Gym", "pool": "B POOL", "pool_position": "2"},
+        {"game_date": "2026-09-08", "start_time": "2026-09-08T19:00:00", "end_time": "2026-09-08T20:00:00", "gym": "A Gym", "pool": "A POOL", "pool_position": "1"},
+    ]}
+    data = _dashboard_model(history, datetime(2026, 9, 2))
+    assert data["next"]["pool"] == "A POOL"
+    assert data["gyms"]["A Gym"] == 2 and data["times"]["19:00"] == 2 and data["pools"]["A POOL"] == 1
