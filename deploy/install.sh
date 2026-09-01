@@ -43,14 +43,18 @@ install -d -o "$SERVICE_USER" -g "$SERVICE_USER" -m 0750 "$RUNTIME_DIR" "$RUNTIM
 
 # Copy code only. Runtime state, virtualenv, and protected configuration stay put.
 tar --exclude=.git --exclude=.env --exclude=.venv --exclude=venv --exclude=runtime --exclude=state --exclude=data --exclude=logs --exclude=__pycache__ --exclude='*.pdf' -C "$SOURCE_DIR" -cf - . | tar -C "$APP_DIR" -xf -
-chown -R root:root "$APP_DIR"
-find "$APP_DIR" -type d -exec chmod 0755 {} +
-find "$APP_DIR" -type f -exec chmod 0644 {} +
+# Normalize application source permissions without traversing the preserved
+# production virtualenv.
+chown root:root "$APP_DIR"
+find "$APP_DIR" -path "$APP_DIR/.venv" -prune -o -exec chown root:root {} +
+find "$APP_DIR" -path "$APP_DIR/.venv" -prune -o -type d -exec chmod 0755 {} +
+find "$APP_DIR" -path "$APP_DIR/.venv" -prune -o -type f -exec chmod 0644 {} +
 chmod 0755 "$APP_DIR/deploy/install.sh" "$APP_DIR/deploy/force-wifi-setup.sh"
-if [[ ! -x "$APP_DIR/.venv/bin/python" ]]; then
+if [[ ! -x "$APP_DIR/.venv/bin/python" ]] || ! "$APP_DIR/.venv/bin/python" -m pip --version >/dev/null 2>&1; then
+  rm -rf "$APP_DIR/.venv"
   python3 -m venv "$APP_DIR/.venv"
 fi
-"$APP_DIR/.venv/bin/pip" install --no-cache-dir -r "$APP_DIR/requirements.txt"
+"$APP_DIR/.venv/bin/python" -m pip install --no-cache-dir -r "$APP_DIR/requirements.txt"
 
 if [[ ! -e "$APP_ENV" ]]; then
   install -o root -g "$SERVICE_USER" -m 0640 "$SOURCE_DIR/examples/volleyball-monitor.env.example" "$APP_ENV"
