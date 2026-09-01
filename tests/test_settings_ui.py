@@ -39,10 +39,10 @@ def test_ui_identifies_schedule_match_text_as_required(monkeypatch, tmp_path):
 
 def test_ui_adds_and_removes_team_aliases_and_rejects_zero():
     current = sample_settings()
-    assert apply_changes(current, {"new_team_name": "Example Spikers 2"})["team_names"] == ["Example Spikers", "Example Spikers 2"]
-    assert apply_changes(current, {"remove_team_name": "Example Spikers 2"})["team_names"] == ["Example Spikers"]
+    assert apply_changes(current, {"action": "add_team_name", "value": "Example Spikers 2"})["team_names"] == ["Example Spikers", "Example Spikers 2"]
+    assert apply_changes(current, {"action": "remove_team_name", "value": "Example Spikers 2"})["team_names"] == ["Example Spikers"]
     with pytest.raises(ValueError, match="team name"):
-        validate(apply_changes(current, {"remove_team_name": "Example Spikers"}))
+        apply_changes(current, {"action": "remove_team_name", "value": "Example Spikers"})
 
 
 def test_ui_section_actions_preserve_unrelated_settings():
@@ -61,3 +61,17 @@ def test_ui_section_actions_preserve_unrelated_settings():
 def test_ui_rejects_removing_last_required_email():
     with pytest.raises(ValueError, match="email recipient"):
         apply_changes(sample_settings(), {"action": "remove_email", "value": "player@example.com"})
+
+
+def test_ui_forms_have_unambiguous_add_and_remove_actions(monkeypatch, tmp_path):
+    monkeypatch.setenv("SETTINGS_FILE", str(tmp_path / "settings.json"))
+    monkeypatch.setenv("SCHEDULE_MATCH_TEXT", "Wednesday")
+    save({**sample_settings(), "schedule_match_text": "Wednesday"})
+    page = _page()
+    assert 'formaction="?action=' not in page
+    assert page.count('name="action" value="add_team_name"') == 1
+    assert page.count('name="action" value="add_gym"') == 1
+    assert page.count('name="action" value="add_email"') == 1
+    assert page.count('name="action" value="remove_team_name"') == 1
+    assert page.count('name="action" value="remove_gym"') == 1
+    assert page.count('name="action" value="remove_email"') == 1
