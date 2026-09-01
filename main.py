@@ -1,12 +1,13 @@
 """One-shot, resumable volleyball schedule monitor."""
 from __future__ import annotations
 import logging, sys, time
-import pdfplumber
+from pdfminer.high_level import extract_text as _extract_pdf_text
 from src.env import load_env
 
 def _pdf_text(path):
-    with pdfplumber.open(str(path)) as pdf:
-        return "\n".join((page.extract_text() or "") for page in pdf.pages)
+    # pdfminer separates pages with a form feed; the former page-by-page
+    # extractor joined pages with newlines.
+    return _extract_pdf_text(str(path)).replace("\f", "\n")
 
 def run(fetcher=None, parser_class=None, calendar_factory=None, mailer_factory=None, state=None):
     from config import KEYWORD, PAGE_URL, PDF_DIR, STATE_FILE

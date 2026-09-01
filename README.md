@@ -18,6 +18,11 @@ the Pi.
 - A CalDAV account and an SMTP account with app passwords, if calendar and
   email notifications are enabled.
 
+The runtime uses `pdfminer.six` directly for PDF text extraction. It does not
+render PDFs and does not require Chromium, PDFium, `pypdfium2`, or Pillow.
+This keeps the dependency set suitable for the original Raspberry Pi Zero W
+(armv6l, 512 MB RAM); use a 32-bit Raspberry Pi OS userspace on that device.
+
 ## Configuration and runtime data
 
 `examples/volleyball-monitor.env.example` is the protected configuration
