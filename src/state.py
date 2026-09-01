@@ -21,6 +21,7 @@ class ScheduleState:
             return {"version": 1}
     def save(self): atomic_json_write(self.path, self.data)
     def run_started(self): self.data["last_attempted_run"] = now(); self.save()
+    def website_scanned(self): self.data["last_website_scan"] = now(); self.save()
     def set_failure(self, stage, exc): self.data["last_failure"] = {"stage":stage,"message":str(exc),"at":now()}; self.save()
     def begin_candidate(self, digest, pdf_path, source_url):
         candidate = self.data.get("candidate", {})
@@ -28,7 +29,10 @@ class ScheduleState:
             candidate = {"hash":digest,"pdf_path":str(pdf_path),"source_url":source_url,"detected_at":now(),"parsed":False,"calendar":False,"email":False}
             self.data["candidate"] = candidate; self.save()
         return candidate
-    def mark_stage(self, stage, value=True): self.data["candidate"][stage] = value; self.save()
+    def mark_stage(self, stage, value=True):
+        self.data["candidate"][stage] = value
+        self.data[f"last_successful_{stage}"] = now()
+        self.save()
     def complete_if_ready(self):
         candidate = self.data.get("candidate", {})
         if all(candidate.get(stage) for stage in ("parsed", "calendar", "email")):

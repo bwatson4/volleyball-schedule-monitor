@@ -23,6 +23,7 @@ class ScheduleParser:
         self.current_gym = None
         self.current_pool = None
         self.uid = None
+        self.session_counts = {}
     
     @staticmethod
     def _norm_team(s: str) -> str:
@@ -61,11 +62,12 @@ class ScheduleParser:
         return False
 
     def detect_pool(self, line):
-        for pool in self.pools:
-            if line.lower().startswith(pool.lower()):
-                self.current_pool = pool
-                return True
-        return False
+        """Recognize KVA's single-letter pool heading without a fixed ceiling."""
+        match = re.match(r"^\s*([A-Z])\s+POOL(?:\s*[-–].*)?\s*$", line, re.IGNORECASE)
+        if not match:
+            return False
+        self.current_pool = f"{match.group(1).upper()} POOL"
+        return True
 
     def extract_block(self, start_index):
         """
@@ -87,7 +89,7 @@ class ScheduleParser:
                 break
             if any(nxt.lower().startswith(g.lower()) for g in self.gyms):
                 break
-            if any(nxt.lower().startswith(p.lower()) for p in self.pools):
+            if self.detect_pool(nxt):
                 break
 
             block.append(nxt)
@@ -165,14 +167,22 @@ class ScheduleParser:
                         alias = self._matched_alias(t["name"])
                         if alias:
                             LOG.info('Schedule team %r matched configured alias %r', t["name"], alias)
-                            # A date alone collides when the team has two pools that day.
-                            stable_uid = f"volleyball-{self.current_date:%Y%m%d}-{gym_for_block}-{pool_for_block}-{start_24}".lower().replace(" ", "-")
+                            # A team has one logical scheduled session per date.  Gym,
+                            # pool and time are mutable revision data, not identity.
+                            session_key = (self.current_date.isoformat(), self._norm_team(t["name"]))
+                            self.session_counts[session_key] = self.session_counts.get(session_key, 0) + 1
+                            stable_uid = f"volleyball-schedule-monitor-{self.current_date:%Y%m%d}-{self._norm_team(t['name']).replace(' ', '-')}-{self.session_counts[session_key]}"
                             self.events.append({
                                 "uid": stable_uid,
+                                "source_team": t["name"],
+                                "date": self.current_date.isoformat(),
                                 "summary": f"{t['name']} Volleyball",
                                 "description": f"Team: {t['name']}; Gym: {gym_for_block}, Pool: {pool_for_block}",
                                 "start": start_dt,
                                 "end": end_dt,
+                                "gym": gym_for_block,
+                                "pool": pool_for_block,
+                                "pool_position": t["num"],
                             })
 
                 i = next_i

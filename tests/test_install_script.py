@@ -14,3 +14,10 @@ def test_installer_recreates_unusable_virtualenv_and_uses_python_pip():
     assert '"$APP_DIR/.venv/bin/python" -m pip --version' in INSTALLER
     assert 'rm -rf "$APP_DIR/.venv"' in INSTALLER
     assert '"$APP_DIR/.venv/bin/python" -m pip install --no-cache-dir' in INSTALLER
+
+
+def test_installer_uses_networkmanager_shared_dns_and_safe_update_restarts():
+    assert "dnsmasq-shared.d/volleyballpi-captive.conf" in INSTALLER
+    assert "systemctl try-restart volleyball-ui.service" in INSTALLER
+    assert "systemctl restart volleyball-schedule.timer" in INSTALLER
+    assert "NetworkManager" not in INSTALLER.split("systemctl daemon-reload", 1)[1]

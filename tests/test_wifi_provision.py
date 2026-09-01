@@ -112,3 +112,20 @@ def test_portal_html_contains_no_application_secrets():
     assert "GMAIL_APP_PASSWORD" not in page
     assert "settings.json" not in page
     assert "Home" in page
+
+
+def test_access_point_configuration_explicitly_disables_pmf(monkeypatch, tmp_path):
+    runner = Runner({("connection", "show", AP_CONNECTION): (0, "")})
+    monkeypatch.setattr("src.wifi_provision.tempfile.mkstemp", lambda **_kwargs: (os.open(tmp_path / "secret", os.O_CREAT | os.O_WRONLY), str(tmp_path / "secret")))
+    import os
+    NetworkManager(runner=runner).start_access_point("setup-secret")
+    modify = next(call for call in runner.calls if "connection" in call and "modify" in call)
+    assert "802-11-wireless-security.pmf" in modify
+    assert modify[modify.index("802-11-wireless-security.pmf") + 1] == "1"
+
+
+def test_portal_title_and_common_captive_paths_are_supported():
+    assert "VolleyballPi Wi-Fi Setup" in _portal_page([])
+    source = __import__("inspect").getsource(wifi_provision.ProvisioningPortal.serve)
+    for path in ("/hotspot-detect.html", "/generate_204", "/connecttest.txt"):
+        assert path in source

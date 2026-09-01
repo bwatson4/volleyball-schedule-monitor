@@ -8,6 +8,8 @@ APP_ENV=/etc/volleyball-schedule-monitor.env
 WIFI_ENV=/etc/volleyball-wifi-provision.env
 SERVICE_USER=volleyball
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+EXISTING_INSTALL=0
+[[ -d "$APP_DIR" ]] && EXISTING_INSTALL=1
 
 if [[ ${EUID} -ne 0 ]]; then
   echo "Run with sudo: sudo ./deploy/install.sh" >&2
@@ -92,9 +94,28 @@ install -o root -g root -m 0644 "$SOURCE_DIR/deploy/volleyball-schedule.service"
 install -o root -g root -m 0644 "$SOURCE_DIR/deploy/volleyball-schedule.timer" /etc/systemd/system/volleyball-schedule.timer
 install -o root -g root -m 0644 "$SOURCE_DIR/deploy/volleyball-ui.service" /etc/systemd/system/volleyball-ui.service
 install -o root -g root -m 0644 "$SOURCE_DIR/deploy/volleyball-wifi-provision.service" /etc/systemd/system/volleyball-wifi-provision.service
+# NetworkManager shared mode owns DHCP/DNS; this only supplies its additional
+# captive DNS mapping, not a competing daemon.
+install -d -o root -g root -m 0755 /etc/NetworkManager/dnsmasq-shared.d
+install -o root -g root -m 0644 "$SOURCE_DIR/deploy/volleyballpi-captive.conf" /etc/NetworkManager/dnsmasq-shared.d/volleyballpi-captive.conf
 
 systemctl daemon-reload
-systemctl enable volleyball-schedule.timer volleyball-ui.service volleyball-wifi-provision.service
-systemctl start volleyball-wifi-provision.service
+if [[ "$EXISTING_INSTALL" -eq 0 ]]; then
+  # Fresh appliances get the normal boot services, but credential configuration
+  # remains separate and the provisioner itself decides whether AP mode is needed.
+  systemctl enable volleyball-schedule.timer volleyball-ui.service volleyball-wifi-provision.service
+  systemctl start volleyball-wifi-provision.service
+else
+  # Do not enable services a maintainer intentionally disabled and do not touch
+  # an active schedule run during an update.
+  if systemctl is-enabled --quiet volleyball-ui.service || systemctl is-active --quiet volleyball-ui.service; then
+    systemctl try-restart volleyball-ui.service
+  fi
+  if systemctl is-active --quiet volleyball-schedule.timer; then
+    systemctl restart volleyball-schedule.timer
+  elif systemctl is-enabled --quiet volleyball-schedule.timer; then
+    systemctl start volleyball-schedule.timer
+  fi
+fi
 echo "Installed. Set application credentials in $APP_ENV, then run:"
 echo "  sudo systemctl start volleyball-ui.service volleyball-schedule.timer"
