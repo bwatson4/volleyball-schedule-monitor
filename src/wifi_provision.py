@@ -63,9 +63,9 @@ def validate_wifi_password(value: str) -> str:
 class NetworkManager:
     """Small, testable ``nmcli`` adapter for one Wi-Fi interface."""
 
-    def __init__(self, interface: str = "wlan0", runner: Callable = subprocess.run):
+    def __init__(self, interface: str = "wlan0", runner: Callable | None = None):
         self.interface = interface
-        self.runner = runner
+        self.runner = runner or subprocess.run
 
     def _run(self, *args: str) -> str:
         try:

@@ -2,6 +2,7 @@ import logging
 from types import SimpleNamespace
 
 import pytest
+import src.wifi_provision as wifi_provision
 
 from src.wifi_provision import (
     AP_CONNECTION,
@@ -10,6 +11,16 @@ from src.wifi_provision import (
     _portal_page,
     validate_ssid,
 )
+
+
+@pytest.fixture(autouse=True)
+def forbid_host_operations(monkeypatch):
+    """Prevent Wi-Fi and systemd commands from reaching the pytest host."""
+    def blocked_run(args, **_kwargs):
+        command = args[0] if args else ""
+        raise AssertionError(f"pytest attempted to run host command: {command}")
+
+    monkeypatch.setattr(wifi_provision.subprocess, "run", blocked_run)
 
 
 class Runner:
@@ -37,7 +48,7 @@ def test_disconnected_boot_requests_setup_mode():
         def client_connected(self): return False
         def start_access_point(self, _password): self.started = True
     network = Network()
-    ProvisioningController(network, "safe-password").start_setup()
+    ProvisioningController(network, "safe-password", ui_manager=lambda _action: None).start_setup()
     assert network.started
 
 
@@ -75,7 +86,7 @@ def test_failed_provisioning_recovers_setup_and_password_not_logged(caplog):
     # The adapter's explicit error type represents a safe nmcli failure.
     network.connect = lambda _ssid, _password: (_ for _ in ()).throw(__import__("src.wifi_provision", fromlist=["NmcliError"]).NmcliError("failed"))
     with caplog.at_level(logging.INFO):
-        assert ProvisioningController(network, "setup-secret").submit("Home", "client-secret") is False
+        assert ProvisioningController(network, "setup-secret", ui_manager=lambda _action: None).submit("Home", "client-secret") is False
     assert network.recovered
     assert "client-secret" not in caplog.text and "setup-secret" not in caplog.text
 
