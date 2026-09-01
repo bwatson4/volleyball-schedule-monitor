@@ -303,3 +303,7 @@ def run_service() -> None:
         return
     controller.start_setup()
     ProvisioningPortal(controller, port=int(os.environ.get("WIFI_PORTAL_PORT", "80"))).serve()
+
+
+if __name__ == "__main__":
+    run_service()

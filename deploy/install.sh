@@ -46,7 +46,7 @@ tar --exclude=.git --exclude=.env --exclude=.venv --exclude=venv --exclude=runti
 chown -R root:root "$APP_DIR"
 find "$APP_DIR" -type d -exec chmod 0755 {} +
 find "$APP_DIR" -type f -exec chmod 0644 {} +
-chmod 0755 "$APP_DIR/deploy/install.sh" "$APP_DIR/deploy/force-wifi-setup.sh" "$APP_DIR/deploy/wifi_provision.py"
+chmod 0755 "$APP_DIR/deploy/install.sh" "$APP_DIR/deploy/force-wifi-setup.sh"
 if [[ ! -x "$APP_DIR/.venv/bin/python" ]]; then
   python3 -m venv "$APP_DIR/.venv"
 fi
