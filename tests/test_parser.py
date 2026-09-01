@@ -77,6 +77,7 @@ def test_parse_case_insensitive():
     event = events[0]
     
     assert event["summary"] == "example spikers Volleyball"
+    assert event["season"] == "2025-26"
     assert event["description"] == "Team: example spikers; Gym: EXAMPLE COMMUNITY CENTRE, Pool: A POOL"
     assert event["start"] == datetime(2025, 12, 3, 20, 0)
     assert event["end"] == datetime(2025, 12, 3, 21, 45)
@@ -93,6 +94,15 @@ def test_alias_matching_is_not_substring_or_fuzzy():
     text = "Example Gym December 3, 2026\nA POOL\n1 Example Spikers 2 7:00-8:00"
     events = ScheduleParser(text, team_names=["Example Spikers"], gyms=["Example Gym"], pools=["A POOL"]).parse()
     assert events == []
+
+def test_pool_teams_preserve_display_spelling_and_exclude_configured_aliases():
+    from src.parser import ScheduleParser
+    text = "Example Gym December 3, 2026\nA POOL\n1 Example Team 7:00-8:00\n2  TEAM   ALPHA\n3 Team Bravo"
+    event = ScheduleParser(text, team_names=["example  team", "Example Team"], gyms=["Example Gym"], pools=["A POOL"]).parse()[0]
+    assert event["pool_teams"] == [
+        {"name": "TEAM ALPHA", "normalized_name": "team alpha"},
+        {"name": "Team Bravo", "normalized_name": "team bravo"},
+    ]
 
 def test_alias_choice_does_not_change_stable_event_identity():
     from src.parser import ScheduleParser

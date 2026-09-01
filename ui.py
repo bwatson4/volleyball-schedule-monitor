@@ -10,9 +10,10 @@ from urllib.parse import parse_qs, urlparse
 
 from src.env import load_env
 from src.settings import load, save
+from src.season import season_for_date
 from src.state import ScheduleState
 
-VIEWS = {"home", "history", "settings"}
+VIEWS = {"home", "history", "teams", "settings"}
 
 def _state():
     from config import STATE_FILE
@@ -25,7 +26,9 @@ def _ui_settings():
         return {"team_names": [], "schedule_match_text": "", "gyms": [], "email_recipients": []}
 
 def _empty_history():
-    return {"revisions": [], "games": [], "current_games": [], "analytics_games": [], "pool_observations": []}
+    return {"revisions": [], "games": [], "current_games": [], "analytics_games": [], "pool_observations": [],
+            "team_history": [], "team_history_by_season": {}, "seasons": [],
+            "current_season": season_for_date(datetime.now(timezone.utc).date())}
 
 def _history():
     try:
@@ -47,6 +50,12 @@ def _time(value):
     try: return datetime.fromisoformat(value).strftime("%H:%M")
     except (ValueError, TypeError): return str(value or "")[-5:]
 
+def _date(value):
+    try:
+        return datetime.fromisoformat(value).strftime("%b %d, %Y").replace(" 0", " ")
+    except (ValueError, TypeError):
+        return str(value or "")
+
 def _event_time(game):
     try: return datetime.fromisoformat(game["start_time"])
     except (ValueError, TypeError): return datetime.min
@@ -55,15 +64,19 @@ def _dashboard_model(history, current_time=None):
     """Separate current schedule, deduplicated analytics and observations."""
     current_time = current_time or datetime.now(timezone.utc).replace(tzinfo=None)
     current_games = sorted(history.get("current_games", history.get("games", [])), key=_event_time)
-    analytics_games = sorted(history.get("analytics_games", history.get("games", [])), key=_event_time)
+    current_season = history.get("current_season") or season_for_date(current_time.date())
+    all_analytics_games = sorted(history.get("analytics_games", history.get("games", [])), key=_event_time)
+    analytics_games = [game for game in all_analytics_games if (game.get("season") or season_for_date(game.get("game_date", current_time.date()))) == current_season]
     current_upcoming = [game for game in current_games if _event_time(game) >= current_time]
     return {"current_games": current_games, "current_upcoming": current_upcoming,
             "next": current_upcoming[0] if current_upcoming else None,
             "analytics_games": analytics_games,
+            "current_season": current_season,
             "gyms": Counter(game.get("gym") or "Unknown" for game in analytics_games),
             "times": Counter(_time(game.get("start_time")) for game in analytics_games),
             "pools": Counter(game.get("pool") or "Unknown" for game in analytics_games),
             "revisions": history.get("revisions", []),
+            "team_history": history.get("team_history", []),
             # Pool Movement is a session-level view, never a revision-level view.
             "pool_observations": analytics_games}
 
@@ -95,6 +108,26 @@ def _schedule_rows(games):
     rows = "".join(f'<tr><td>{_esc(game.get("game_date"))}</td><td>{_esc(_time(game.get("start_time")))}–{_esc(_time(game.get("end_time")))}</td><td>{_esc(game.get("gym"))}</td><td>{_esc(game.get("pool"))}</td><td>{_esc(game.get("pool_position"))}</td></tr>' for game in games)
     return rows or '<tr><td colspan="5" class="muted">No future games are in the latest parsed schedule.</td></tr>'
 
+def _team_badge(team):
+    classification = team.get("classification", "NEW")
+    label = {"NEW": "NEW THIS SEASON", "NEW THIS SEASON": "NEW THIS SEASON", "SAME AS LAST WEEK": "SAME AS LAST WEEK", "RETURNING": "RETURNING"}.get(classification, classification.upper())
+    css = {"NEW": "new", "SAME AS LAST WEEK": "same", "RETURNING": "returning"}.get(classification, "new")
+    number = team.get("encounter_number", 1)
+    suffix = "th" if 10 < number % 100 < 14 else {1: "st", 2: "nd", 3: "rd"}.get(number % 10, "th")
+    details = f" · {number}{suffix} meeting this season"
+    return f'<span class="team-badge {css}">{_esc(label)}{_esc(details)}</span>'
+
+def _teams_this_week(game):
+    teams = game.get("pool_teams", []) if game else []
+    if not teams:
+        return '<section class="card teams-card"><h2>Teams in Your Pool</h2><p class="muted">Team associations will appear after a schedule block is published.</p></section>'
+    rows = "".join(
+        f'<li><b>{_esc(team.get("display_name"))}</b> {_team_badge(team)}'
+        + (f'<small>{_esc(team.get("all_time_encounters"))} all-time meetings</small>' if team.get("all_time_encounters", 0) > team.get("encounter_number", 1) else "")
+        + (f'<small>Last together: {_esc(_date(team.get("last_together")))}</small>' if team.get("last_together") else "") + "</li>"
+        for team in teams)
+    return f'<section class="card teams-card"><h2>Teams in Your Pool</h2><p class="muted">KVA lists shared pool/session teams; this does not assert direct head-to-head fixtures.</p><ul class="team-list">{rows}</ul></section>'
+
 def _home_view(state, history):
     data = _dashboard_model(history); next_game = data["next"]
     current = next_game or (data["current_games"][-1] if data["current_games"] else None)
@@ -103,7 +136,7 @@ def _home_view(state, history):
         next_content = f'<p class="date">{_esc(next_game.get("game_date"))}</p><p class="next-time">{_esc(_time(next_game.get("start_time")))}–{_esc(_time(next_game.get("end_time")))}</p><p class="venue">{_esc(next_game.get("gym"))}</p><p>Pool <b>{_esc(next_game.get("pool"))}</b> · Position <b>{_esc(next_game.get("pool_position"))}</b></p>'
     else: next_content = '<p class="muted">No future game is in the latest parsed schedule.</p>'
     status = f'<dl><dt>Current/latest pool</dt><dd>{_esc(current.get("pool")) if current else "—"}</dd><dt>Current pool position</dt><dd>{_esc(current.get("pool_position")) if current else "—"}</dd><dt>Next game</dt><dd>{_esc(current.get("game_date")) if current else "—"} {_esc(_time(current.get("start_time"))) if current else ""}</dd><dt>Next gym</dt><dd>{_esc(current.get("gym")) if current else "—"}</dd><dt>Latest revision</dt><dd>{_esc(_fmt(latest.get("detected_at")))}</dd></dl>'
-    return f'''<div class="home-lead"><section class="card next-card"><h2>Next Game</h2>{next_content}</section><section class="card status-card"><h2>Current Status</h2>{status}</section></div><section class="card"><h2>Current Schedule</h2><p class="muted">Only the latest successfully parsed revision is shown.</p><div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Gym</th><th>Pool</th><th>Position</th></tr></thead><tbody>{_schedule_rows(data["current_upcoming"])}</tbody></table></div></section><div class="analytics-grid">{_bar_summary("Gym Breakdown", data["gyms"])}{_bar_summary("Time Slot Breakdown", data["times"])}{_bar_summary("Pool Appearances", data["pools"])}<section class="card"><h3>Schedule Analytics</h3><p class="muted">These summaries deduplicate logical sessions across revisions.</p><p><b>Most common start:</b> {_esc(data["times"].most_common(1)[0][0]) if data["times"] else "—"}</p></section></div><section class="card movement-card"><h2>Pool Movement</h2><p class="muted">One point per weekly game.</p>{_pool_chart(data["pool_observations"])}</section>'''
+    return f'''<div class="home-lead"><section class="card next-card"><h2>Next Game</h2>{next_content}</section><section class="card status-card"><h2>Current Status</h2>{status}</section></div>{_teams_this_week(current)}<section class="card"><h2>Current Schedule</h2><p class="muted">Only the latest successfully parsed revision is shown.</p><div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Gym</th><th>Pool</th><th>Position</th></tr></thead><tbody>{_schedule_rows(data["current_upcoming"])}</tbody></table></div></section><div class="analytics-grid">{_bar_summary("Gym Breakdown", data["gyms"])}{_bar_summary("Time Slot Breakdown", data["times"])}{_bar_summary("Pool Appearances", data["pools"])}<section class="card"><h3>Schedule Analytics</h3><p class="muted">These summaries deduplicate logical sessions across revisions.</p><p><b>Most common start:</b> {_esc(data["times"].most_common(1)[0][0]) if data["times"] else "—"}</p></section></div><section class="card movement-card"><h2>Pool Movement</h2><p class="muted">One point per weekly game.</p>{_pool_chart(data["pool_observations"])}</section>'''
 
 def _history_view(state, history):
     revisions, failure = history.get("revisions", []), state.get("last_failure")
@@ -117,19 +150,42 @@ def _history_view(state, history):
     rows = "".join(f'<tr><td>{_esc(_fmt(revision.get("detected_at")))}</td><td><a href="{_esc(revision.get("source_url"))}" title="{_esc(revision.get("source_url"))}">Open PDF</a></td><td>{_esc(_fmt(revision.get("parsed_at")))}</td><td>{_esc(_fmt(revision.get("calendar_at")))}</td><td>{_esc(_fmt(revision.get("email_at")))}</td><td>{_esc(_fmt(revision.get("completed_at")))}</td></tr>' for revision in revisions) or '<tr><td colspan="6" class="muted">No schedule revisions detected yet.</td></tr>'
     return f'''<section class="card"><h2>Operational History</h2><div class="metric-grid">{metrics}</div>{failure_html}</section><section class="card"><h2>Schedule Revisions</h2><div class="table-wrap"><table><thead><tr><th>Detected</th><th>Source</th><th>Parsed</th><th>Calendar synced</th><th>Email sent</th><th>Completed</th></tr></thead><tbody>{rows}</tbody></table></div></section>'''
 
+def _teams_view(history, season=None):
+    current_season = history.get("current_season") or season_for_date(datetime.now(timezone.utc).date())
+    seasons = list(history.get("seasons", []))
+    if current_season not in seasons:
+        seasons.insert(0, current_season)
+    seasons = sorted(set(seasons), reverse=True)
+    selected = season if season == "all" or season in seasons else current_season
+    teams = history.get("team_history", []) if selected == "all" else history.get("team_history_by_season", {}).get(selected, [])
+    is_all_time = selected == "all"
+    if is_all_time:
+        headings = "<th>Team</th><th>Total meetings</th><th>First seen</th><th>Last together</th><th>Seasons together</th>"
+        rows = "".join(f'<tr><td>{_esc(team.get("team"))}</td><td>{_esc(team.get("weeks_together"))}</td><td>{_esc(team.get("first_seen"))}</td><td>{_esc(team.get("last_together"))}</td><td>{_esc(team.get("seasons_together"))}</td></tr>' for team in teams) or '<tr><td colspan="5" class="muted">No team associations have been recorded yet.</td></tr>'
+    else:
+        headings = "<th>Team</th><th>Weeks together</th><th>First seen</th><th>Last together</th><th>All-time meetings</th>"
+        rows = "".join(f'<tr><td>{_esc(team.get("team"))}</td><td>{_esc(team.get("weeks_together"))}</td><td>{_esc(team.get("first_seen"))}</td><td>{_esc(team.get("last_together"))}</td><td>{_esc(team.get("all_time_meetings"))}</td></tr>' for team in teams) or '<tr><td colspan="5" class="muted">No team associations have been recorded yet.</td></tr>'
+    most_common = teams[0]["team"] if teams else "—"
+    metrics = "".join(f'<div><span>{_esc(label)}</span><b>{_esc(value)}</b></div>' for label, value in (("Unique teams", len(teams)), ("Most frequent", most_common)))
+    options = f'<option value="{_esc(current_season)}" {"selected" if selected == current_season else ""}>Current season ({_esc(current_season)})</option>'
+    options += "".join(f'<option value="{_esc(item)}" {"selected" if selected == item else ""}>{_esc(item)}</option>' for item in seasons if item != current_season)
+    options += f'<option value="all" {"selected" if is_all_time else ""}>All Time</option>'
+    return f'''<section class="card"><h2>League Team History</h2><p class="muted">One encounter per logical weekly game, using the latest successfully parsed revision.</p><form method="get"><input type="hidden" name="view" value="teams"><label for="season">Season</label> <select id="season" name="season">{options}</select> <button type="submit">Show</button></form><div class="metric-grid">{metrics}</div><div class="table-wrap"><table><thead><tr>{headings}</tr></thead><tbody>{rows}</tbody></table></div></section>'''
+
 def _settings_view(settings):
     def removals(values, action):
         return "".join(f'<li>{_esc(value)} <form method="post" class="inline"><input type="hidden" name="view" value="settings"><input type="hidden" name="action" value="{action}"><input type="hidden" name="value" value="{_esc(value)}"><button type="submit">Remove</button></form></li>' for value in values)
     hidden = '<input type="hidden" name="view" value="settings">'
     return f'''<div class="settings-grid"><section class="card"><h2>Schedule Selection</h2><p>This field is required before schedule processing can run.</p><form method="post">{hidden}<input name="schedule_match_text" value="{_esc(settings["schedule_match_text"])}" required aria-required="true"><input type="hidden" name="action" value="save_schedule_match_text"><button type="submit">Save</button></form></section><section class="card"><h2>Team Names</h2><ul>{removals(settings["team_names"], "remove_team_name")}</ul><form method="post">{hidden}<input name="value" placeholder="Add team name"><input type="hidden" name="action" value="add_team_name"><button type="submit">Add team</button></form></section><section class="card"><h2>Gyms</h2><ul>{removals(settings["gyms"], "remove_gym")}</ul><form method="post">{hidden}<input name="value" placeholder="Add gym"><input type="hidden" name="action" value="add_gym"><button type="submit">Add gym</button></form></section><section class="card"><h2>Email Recipients</h2><ul>{removals(settings["email_recipients"], "remove_email")}</ul><form method="post">{hidden}<input name="value" type="email" placeholder="Add email"><input type="hidden" name="action" value="add_email"><button type="submit">Add email</button></form></section></div>'''
 
-def _page(view="home", message="", error=""):
+def _page(view="home", season=None, message="", error=""):
     view = view if view in VIEWS else "home"
     settings, state, history = _ui_settings(), _state(), _history()
     if view == "settings" and not settings["schedule_match_text"]: error = error or "schedule match text is required"
     failure = state.get("last_failure"); health = "Healthy" if not failure else f'Failure: {failure.get("stage", "processing")}'; status_class = "healthy" if not failure else "unhealthy"
-    navigation = "".join(f'<a href="/?view={name}" class="{"active" if view == name else ""}" {"aria-current=\"page\"" if view == name else ""}>{name.title()}</a>' for name in ("home", "history", "settings"))
-    content = _home_view(state, history) if view == "home" else _history_view(state, history) if view == "history" else _settings_view(settings)
+    navigation = "".join(f'<a href="/?view={name}" class="{"active" if view == name else ""}" {"aria-current=\"page\"" if view == name else ""}>{name.title()}</a>' for name in ("home", "history", "teams", "settings"))
+    badge_css = '<style>.team-list{list-style:none;padding:0;margin:0}.team-list li{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;padding:.55rem 0;border-top:1px solid #e1e8eb}.team-list small{color:#5a6871}.team-badge{border:1px solid currentColor;border-radius:1rem;padding:.12rem .45rem;font-size:.8rem;font-weight:700}.team-badge.new{color:#12633d;background:#e6f4eb}.team-badge.same{color:#075b93;background:#e3f0f6}.team-badge.returning{color:#825500;background:#fff4d6}</style>'
+    content = badge_css + (_home_view(state, history) if view == "home" else _history_view(state, history) if view == "history" else _teams_view(history, season) if view == "teams" else _settings_view(settings))
     notices = f'<p class="notice">{_esc(message)}</p>' if message else ''
     notices += f'<p class="notice error">{_esc(error)}</p>' if error else ''
     failure_link = ' <a href="/?view=history#failure">View details</a>' if failure else ''
@@ -151,8 +207,8 @@ class Handler(BaseHTTPRequestHandler):
     def _send(self, body):
         encoded = body.encode("utf-8"); self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8"); self.send_header("Content-Length", str(len(encoded))); self.end_headers(); self.wfile.write(encoded)
     def do_GET(self):
-        view = parse_qs(urlparse(self.path).query).get("view", ["home"])[0]
-        try: self._send(_page(view=view))
+        query = parse_qs(urlparse(self.path).query); view = query.get("view", ["home"])[0]
+        try: self._send(_page(view=view, season=query.get("season", [None])[0]))
         except Exception as exc: self._send(_page(view="home", error=str(exc)))
     def do_POST(self):
         data = {key: values[0] for key, values in parse_qs(self.rfile.read(int(self.headers.get("Content-Length", "0"))).decode()).items()}; view = data.get("view", "settings")

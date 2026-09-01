@@ -3,6 +3,8 @@ import logging
 import re
 from datetime import datetime
 
+from src.season import season_for_date
+
 
 LOG = logging.getLogger("schedule_monitor.parser")
 
@@ -121,6 +123,26 @@ class ScheduleParser:
                 })
         return teams
 
+    def _pool_teams(self, teams):
+        """Return the other teams in a shared KVA pool/session block.
+
+        KVA pool listings do not establish head-to-head fixtures, so these are
+        deliberately named ``pool_teams`` rather than opponents.  Identity is
+        normalized only to remove aliases and duplicate extracted text; the
+        spelling from the PDF remains the display value.  Each entry carries
+        both values so the parsed event is useful independently of calendar
+        rendering or the history database.
+        """
+        configured = set(self.team_names_norm)
+        result, seen = [], set()
+        for team in teams:
+            normalized = self._norm_team(team["name"])
+            if not normalized or normalized in configured or normalized in seen:
+                continue
+            seen.add(normalized)
+            result.append({"name": team["name"], "normalized_name": normalized})
+        return result
+
     @staticmethod
     def _pm_to_24h(tstr: str) -> str:
         hour, minute = map(int, tstr.split(":"))
@@ -151,6 +173,7 @@ class ScheduleParser:
                 block, next_i, gym_for_block, pool_for_block = self.extract_block(i)
                 start_raw, end_raw = self.extract_time(block)
                 teams = self.extract_teams(block)
+                pool_teams = self._pool_teams(teams)
 
                 if start_raw and end_raw and self.current_date:
                     start_24 = self._pm_to_24h(start_raw)
@@ -176,6 +199,7 @@ class ScheduleParser:
                                 "uid": stable_uid,
                                 "source_team": t["name"],
                                 "date": self.current_date.isoformat(),
+                                "season": season_for_date(self.current_date),
                                 "summary": f"{t['name']} Volleyball",
                                 "description": f"Team: {t['name']}; Gym: {gym_for_block}, Pool: {pool_for_block}",
                                 "start": start_dt,
@@ -183,6 +207,7 @@ class ScheduleParser:
                                 "gym": gym_for_block,
                                 "pool": pool_for_block,
                                 "pool_position": t["num"],
+                                "pool_teams": pool_teams,
                             })
 
                 i = next_i
