@@ -49,6 +49,9 @@ def run(fetcher=None, parser_class=None, calendar_factory=None, mailer_factory=N
             fetcher = fetcher or PDFFetcher(PDF_DIR, KEYWORD, PAGE_URL)
             state.website_scanned()
             urls = fetcher.get_schedule_urls()
+            # An attempted scan is not proof of connectivity; only a returned
+            # candidate list establishes website/download recovery.
+            state.mark_website_success()
             if not urls:
                 logger.info("No published schedule PDF found.")
                 return True

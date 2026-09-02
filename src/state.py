@@ -23,6 +23,23 @@ class ScheduleState:
     def run_started(self): self.data["last_attempted_run"] = now(); self.save()
     def website_scanned(self): self.data["last_website_scan"] = now(); self.save()
     def set_failure(self, stage, exc): self.data["last_failure"] = {"stage":stage,"message":str(exc),"at":now()}; self.save()
+    def _clear_failure(self, stage=None):
+        failure = self.data.get("last_failure")
+        if failure and (stage is None or failure.get("stage") == stage):
+            self.data.pop("last_failure", None)
+            return True
+        return False
+    def clear_failure(self, stage=None):
+        """Clear a failure only when its stage has been proven recovered."""
+        if self._clear_failure(stage):
+            self.save()
+            return True
+        return False
+    def mark_website_success(self):
+        """Record a completed website scan and recover only website failures."""
+        self.data["last_website_scan"] = now()
+        self._clear_failure("website/download")
+        self.save()
     def begin_candidate(self, digest, pdf_path, source_url):
         candidate = self.data.get("candidate", {})
         if candidate.get("hash") != digest:
@@ -32,6 +49,7 @@ class ScheduleState:
     def mark_stage(self, stage, value=True):
         self.data["candidate"][stage] = value
         self.data[f"last_successful_{stage}"] = now()
+        self._clear_failure(stage)
         self.save()
     def complete_if_ready(self):
         candidate = self.data.get("candidate", {})
