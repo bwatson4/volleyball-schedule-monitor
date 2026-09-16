@@ -54,7 +54,8 @@ def run(fetcher=None, parser_class=None, calendar_factory=None, mailer_factory=N
             state.mark_website_success()
             if not urls:
                 logger.info("No published schedule PDF found.")
-                return True
+                state.schedule_discovery_failed(RuntimeError("website reachable but no schedule link was discovered"))
+                return False
             schedule_matches = []
             wanted_text = normalize_text(settings["schedule_match_text"])
             for url in urls:
@@ -70,19 +71,26 @@ def run(fetcher=None, parser_class=None, calendar_factory=None, mailer_factory=N
                     logger.info("Valid schedule candidate does not match schedule text %r: %s", settings["schedule_match_text"], downloaded.url)
             if not schedule_matches:
                 logger.info("No published schedule PDF matched schedule text %r.", settings["schedule_match_text"])
-                return True
+                state.schedule_discovery_failed(RuntimeError("website reachable but no current schedule document matched the configured league"))
+                return False
+            # At this point the response was a validated PDF whose text names
+            # the configured league.  Parsing is a distinct later stage.
+            state.schedule_document_found()
             if len(schedule_matches) == 1:
                 downloaded, pdf_text = schedule_matches[0]
-                parsed_events = parse_schedule(pdf_text)
             else:
-                secondary = [(item, parse_schedule(item[1])) for item in schedule_matches]
+                try:
+                    secondary = [(item, parse_schedule(item[1])) for item in schedule_matches]
+                except Exception as exc:
+                    state.set_failure("parse", exc); logger.exception("parsing failed"); return False
                 secondary = [(item, events) for item, events in secondary if events]
                 if len(secondary) != 1:
                     logger.error("%d PDFs match schedule text %r; team aliases did not identify exactly one candidate", len(schedule_matches), settings["schedule_match_text"])
-                    return True
+                    state.schedule_discovery_failed(RuntimeError("multiple current schedule documents matched; unable to select one"))
+                    return False
                 (downloaded, pdf_text), parsed_events = secondary[0]
                 logger.warning("Multiple PDFs match schedule text; selected %s using team aliases", downloaded.url)
-            if not parsed_events:
+            if parsed_events is not None and not parsed_events:
                 logger.info("Configured team not found in selected schedule PDF: %s", downloaded.url)
                 return True
             if state.data.get("completed", {}).get("hash") == downloaded.digest:
