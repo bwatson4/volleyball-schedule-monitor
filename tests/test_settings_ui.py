@@ -96,6 +96,23 @@ def test_dashboard_model_uses_latest_current_revision_and_deduplicates_pool_move
     assert [item["pool"] for item in data["pool_observations"]] == ["B POOL"]
 
 
+def test_home_keeps_latest_weekly_assignment_visible_after_it_is_no_longer_future():
+    from ui import _home_view
+
+    game = {"game_date": "2026-09-16", "start_time": "2026-09-16T20:30:00",
+            "end_time": "2026-09-16T22:00:00", "gym": "KCS", "pool": "D POOL",
+            "pool_position": "3"}
+    history = {"current_games": [game], "analytics_games": [game], "revisions": []}
+    data = _dashboard_model(history, datetime(2026, 9, 17))
+    page = _home_view({}, history)
+
+    assert data["next"] is None and data["latest_assignment"] == game
+    assert "This Week’s Game" in page and "Latest Weekly Schedule" in page
+    assert "Wednesday, Sep 16" in page and page.count("8:30 PM–10:00 PM") == 2
+    assert "KCS" in page and "D POOL" in page and "Position <b>3</b>" in page
+    assert "No future game" not in page and "20:30" not in page
+
+
 def test_pool_movement_chart_labels_one_point_per_weekly_game():
     from ui import _pool_chart
 
@@ -108,7 +125,7 @@ def test_home_history_and_settings_views_have_navigation_active_state_and_escape
     monkeypatch.setattr("ui._ui_settings", lambda: {"team_names": ["<team>"], "schedule_match_text": "Wednesday", "gyms": [], "email_recipients": ["x@example.com"]})
     monkeypatch.setattr("ui._history", lambda: {"revisions": [{"detected_at": "2026-08-31T21:00:00+00:00", "source_url": "https://example/?x=<bad>", "parsed_at": None, "calendar_at": None, "email_at": None, "completed_at": None}], "current_games": [], "analytics_games": [], "pool_observations": [], "games": []})
     home, history, settings = _page(), _page(view="history"), _page(view="settings")
-    assert "Next Game" in home and 'aria-current="page">Home' in home
+    assert "This Week’s Game" in home and 'aria-current="page">Home' in home
     assert "Operational History" in history and 'aria-current="page">History' in history and "Open PDF" in history
     assert "Schedule Selection" in settings and 'aria-current="page">Settings' in settings
     assert "&lt;team&gt;" in settings and "&lt;bad&gt;" in history

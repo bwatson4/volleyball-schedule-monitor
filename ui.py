@@ -47,12 +47,31 @@ def _fmt(value):
     except (ValueError, TypeError): return str(value)
 
 def _time(value):
+    """Format stored timestamps for people without changing stored values."""
+    try:
+        return datetime.fromisoformat(value).strftime("%I:%M %p").lstrip("0")
+    except (ValueError, TypeError):
+        try: return datetime.strptime(str(value), "%H:%M").strftime("%I:%M %p").lstrip("0")
+        except (ValueError, TypeError): return str(value or "")[-5:]
+
+def _time_range(game):
+    start, end = _time(game.get("start_time")), _time(game.get("end_time"))
+    return f"{start}–{end}" if end else start
+
+def _time_key(value):
+    """Keep analytics grouping independent from display formatting."""
     try: return datetime.fromisoformat(value).strftime("%H:%M")
     except (ValueError, TypeError): return str(value or "")[-5:]
 
 def _date(value):
     try:
         return datetime.fromisoformat(value).strftime("%b %d, %Y").replace(" 0", " ")
+    except (ValueError, TypeError):
+        return str(value or "")
+
+def _game_date(value):
+    try:
+        return datetime.fromisoformat(value).strftime("%A, %b %d").replace(" 0", " ")
     except (ValueError, TypeError):
         return str(value or "")
 
@@ -70,20 +89,21 @@ def _dashboard_model(history, current_time=None):
     current_upcoming = [game for game in current_games if _event_time(game) >= current_time]
     return {"current_games": current_games, "current_upcoming": current_upcoming,
             "next": current_upcoming[0] if current_upcoming else None,
+            "latest_assignment": current_games[-1] if current_games else None,
             "analytics_games": analytics_games,
             "current_season": current_season,
             "gyms": Counter(game.get("gym") or "Unknown" for game in analytics_games),
-            "times": Counter(_time(game.get("start_time")) for game in analytics_games),
+            "times": Counter(_time_key(game.get("start_time")) for game in analytics_games),
             "pools": Counter(game.get("pool") or "Unknown" for game in analytics_games),
             "revisions": history.get("revisions", []),
             "team_history": history.get("team_history", []),
             # Pool Movement is a session-level view, never a revision-level view.
             "pool_observations": analytics_games}
 
-def _bar_summary(title, values):
+def _bar_summary(title, values, label_formatter=str):
     if not values: return f'<section class="card"><h3>{_esc(title)}</h3><p class="muted">No schedule data yet.</p></section>'
     maximum = max(values.values())
-    rows = "".join(f'<div class="bar-row"><span>{_esc(label)}</span><i><b style="width:{count * 100 / maximum:.0f}%"></b></i><strong>{count}</strong></div>' for label, count in values.most_common())
+    rows = "".join(f'<div class="bar-row"><span>{_esc(label_formatter(label))}</span><i><b style="width:{count * 100 / maximum:.0f}%"></b></i><strong>{count}</strong></div>' for label, count in values.most_common())
     return f'<section class="card"><h3>{_esc(title)}</h3>{rows}</section>'
 
 def _pool_chart(observations):
@@ -105,8 +125,8 @@ def _pool_chart(observations):
     return f'<div class="svg-wrap">{svg}</div><p class="muted">A ranks above B, B above C. One point per weekly game, using the latest successfully parsed observation.</p>'
 
 def _schedule_rows(games):
-    rows = "".join(f'<tr><td>{_esc(game.get("game_date"))}</td><td>{_esc(_time(game.get("start_time")))}–{_esc(_time(game.get("end_time")))}</td><td>{_esc(game.get("gym"))}</td><td>{_esc(game.get("pool"))}</td><td>{_esc(game.get("pool_position"))}</td></tr>' for game in games)
-    return rows or '<tr><td colspan="5" class="muted">No future games are in the latest parsed schedule.</td></tr>'
+    rows = "".join(f'<tr><td>{_esc(_game_date(game.get("game_date")))}</td><td>{_esc(_time_range(game))}</td><td>{_esc(game.get("gym"))}</td><td>{_esc(game.get("pool"))}</td><td>{_esc(game.get("pool_position"))}</td></tr>' for game in games)
+    return rows or '<tr><td colspan="5" class="muted">No assignments are in the latest parsed schedule.</td></tr>'
 
 def _team_badge(team):
     classification = team.get("classification", "NEW")
@@ -129,14 +149,14 @@ def _teams_this_week(game):
     return f'<section class="card teams-card"><h2>Teams in Your Pool</h2><p class="muted">KVA lists shared pool/session teams; this does not assert direct head-to-head fixtures.</p><ul class="team-list">{rows}</ul></section>'
 
 def _home_view(state, history):
-    data = _dashboard_model(history); next_game = data["next"]
-    current = next_game or (data["current_games"][-1] if data["current_games"] else None)
+    data = _dashboard_model(history); current = data["latest_assignment"]
     latest = data["revisions"][0] if data["revisions"] else {}
-    if next_game:
-        next_content = f'<p class="date">{_esc(next_game.get("game_date"))}</p><p class="next-time">{_esc(_time(next_game.get("start_time")))}–{_esc(_time(next_game.get("end_time")))}</p><p class="venue">{_esc(next_game.get("gym"))}</p><p>Pool <b>{_esc(next_game.get("pool"))}</b> · Position <b>{_esc(next_game.get("pool_position"))}</b></p>'
-    else: next_content = '<p class="muted">No future game is in the latest parsed schedule.</p>'
-    status = f'<dl><dt>Current/latest pool</dt><dd>{_esc(current.get("pool")) if current else "—"}</dd><dt>Current pool position</dt><dd>{_esc(current.get("pool_position")) if current else "—"}</dd><dt>Next game</dt><dd>{_esc(current.get("game_date")) if current else "—"} {_esc(_time(current.get("start_time"))) if current else ""}</dd><dt>Next gym</dt><dd>{_esc(current.get("gym")) if current else "—"}</dd><dt>Latest revision</dt><dd>{_esc(_fmt(latest.get("detected_at")))}</dd></dl>'
-    return f'''<div class="home-lead"><section class="card next-card"><h2>Next Game</h2>{next_content}</section><section class="card status-card"><h2>Current Status</h2>{status}</section></div>{_teams_this_week(current)}<section class="card"><h2>Current Schedule</h2><p class="muted">Only the latest successfully parsed revision is shown.</p><div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Gym</th><th>Pool</th><th>Position</th></tr></thead><tbody>{_schedule_rows(data["current_upcoming"])}</tbody></table></div></section><div class="analytics-grid">{_bar_summary("Gym Breakdown", data["gyms"])}{_bar_summary("Time Slot Breakdown", data["times"])}{_bar_summary("Pool Appearances", data["pools"])}<section class="card"><h3>Schedule Analytics</h3><p class="muted">These summaries deduplicate logical sessions across revisions.</p><p><b>Most common start:</b> {_esc(data["times"].most_common(1)[0][0]) if data["times"] else "—"}</p></section></div><section class="card movement-card"><h2>Pool Movement</h2><p class="muted">One point per weekly game.</p>{_pool_chart(data["pool_observations"])}</section>'''
+    if current:
+        game_content = f'<p class="date">{_esc(_game_date(current.get("game_date")))}</p><p class="next-time">{_esc(_time_range(current))}</p><p class="venue">{_esc(current.get("gym"))}</p><p>Pool <b>{_esc(current.get("pool"))}</b> · Position <b>{_esc(current.get("pool_position"))}</b></p>'
+    else: game_content = '<p class="muted">No assignment is in the latest parsed schedule.</p>'
+    status = f'<dl><dt>Current pool</dt><dd>{_esc(current.get("pool")) if current else "—"}</dd><dt>Current position</dt><dd>{_esc(current.get("pool_position")) if current else "—"}</dd><dt>Latest revision</dt><dd>{_esc(_fmt(latest.get("detected_at")))}</dd><dt>Calendar synced</dt><dd>{_esc(_fmt(latest.get("calendar_at")))}</dd><dt>Email sent</dt><dd>{_esc(_fmt(latest.get("email_at")))}</dd></dl>'
+    most_common_time = _time(data["times"].most_common(1)[0][0]) if data["times"] else "—"
+    return f'''<div class="home-lead"><section class="card next-card"><h2>This Week’s Game</h2>{game_content}</section><section class="card status-card"><h2>Current Status</h2>{status}</section></div>{_teams_this_week(current)}<section class="card"><h2>Latest Weekly Schedule</h2><p class="muted">The latest successfully parsed weekly assignment is shown, even after its start time.</p><div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Gym</th><th>Pool</th><th>Position</th></tr></thead><tbody>{_schedule_rows(data["current_games"])}</tbody></table></div></section><div class="analytics-grid">{_bar_summary("Gym Breakdown", data["gyms"])}{_bar_summary("Time Slot Breakdown", data["times"], _time)}{_bar_summary("Pool Appearances", data["pools"])}<section class="card"><h3>Schedule Analytics</h3><p class="muted">These summaries use one latest observation per weekly session.</p><p><b>Most common start:</b> {_esc(most_common_time)}</p></section></div><section class="card movement-card"><h2>Pool Movement</h2><p class="muted">One point per weekly game.</p>{_pool_chart(data["pool_observations"])}</section>'''
 
 def _history_view(state, history):
     revisions, failure, discovery_failure = history.get("revisions", []), state.get("last_failure"), state.get("last_schedule_discovery_failure")
