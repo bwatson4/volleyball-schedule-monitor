@@ -124,3 +124,156 @@ def test_non_pool_line_does_not_become_a_pool_heading():
     from src.parser import ScheduleParser
     parser = ScheduleParser("A POOL PARTY", team_names=["Example"], gyms=[])
     assert parser.detect_pool("A POOL PARTY") is False
+
+
+CURRENT_2026_WEDNESDAY_TEXT = """Welcome to the 2026 KVA Co-Ed League!
+POOLS GH WILL NOT PLAY TONIGHT- MAKE UP DAY IN DEC
+
+TCC
+F POOL
+A POOL
+KCS
+B POOL
+D POOL
+OLPH
+C POOL
+E POOL
+Game 1
+Game 2
+Game 3
+Game 4
+Game 5
+Wednesday
+September 16, 2026
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+The VolleyBrawlers
+Setting Ducks
+Bet on the Net
+Ace Holes
+Volley Ballers
+Watch My 6
+Smash or Pass
+Bit Tipsy
+Play to Win
+Bumpernickels
+Set Destroyers
+Schanzenblocks
+No Non Sets
+Smash Bros
+I'd Hit That
+Block Busters
+Back Seat Sets
+Chewblaccas
+To Kill A Rocking Serve
+Spikeachu
+Valleypaulers
+Setsy 3.0
+Nice Tips
+Safe Sets
+Serves You Right
+Thin Blue Line
+Spike Up Your Life
+Leisure Athletes
+Holy Blockamole
+Net Win
+1v5
+1v4
+1v3
+1v2
+3v4
+2v3
+3v5
+2v4
+4v5
+2v5
+7:00-8:15
+8:15-9:30
+7:00-8:30
+8:30-10:00
+6:30-8:00
+8:00- 9:30"""
+
+
+def test_current_flattened_wednesday_schedule_reconstructs_chewblaccas_session():
+    from src.parser import ScheduleParser
+    event = ScheduleParser(
+        CURRENT_2026_WEDNESDAY_TEXT,
+        team_names=["Chewblockas", "Chewblaccas"],
+        gyms=["Pacway", "KCS", "TCC", "OLPH", "Valleyview"],
+    ).parse()[0]
+    assert event["date"] == "2026-09-16"
+    assert event["source_team"] == "Chewblaccas"
+    assert event["gym"] == "KCS" and event["pool"] == "D POOL"
+    assert event["pool_position"] == "3"
+    assert event["start"] == datetime(2026, 9, 16, 20, 30)
+    assert event["end"] == datetime(2026, 9, 16, 22, 0)
+    assert event["pool_teams"] == [
+        {"name": "Block Busters", "normalized_name": "block busters"},
+        {"name": "Back Seat Sets", "normalized_name": "back seat sets"},
+        {"name": "To Kill A Rocking Serve", "normalized_name": "to kill a rocking serve"},
+        {"name": "Spikeachu", "normalized_name": "spikeachu"},
+    ]
+
+
+def flattened_text(pools, target_pool):
+    """Synthetic pdfminer-order schedule with a configurable active pool set."""
+    headings = []
+    for index, pool in enumerate(pools):
+        headings.extend(["North Gym" if index < len(pools) // 2 else "South Gym", f"{pool} POOL"])
+    slots = [str(position) for _pool in pools for position in range(1, 5)]
+    teams = [f"{pool} Team {position}" for pool in pools for position in range(1, 5)]
+    teams[pools.index(target_pool) * 4 + 2] = "Configured Team"
+    times = [f"{6 + (index % 5)}:00-{7 + (index % 5)}:00" for index in range(len(pools))]
+    return "\n".join(headings + ["Wednesday", "October 7, 2026"] + slots + teams + ["1v4", "2v3"] + times)
+
+
+def test_flattened_full_week_detects_eight_blocks_without_a_six_pool_assumption():
+    from src.parser import ScheduleParser
+    event = ScheduleParser(
+        flattened_text(list("ABCDEFGH"), "H"), team_names=["Configured Team"], gyms=["North Gym", "South Gym"]
+    ).parse()[0]
+    assert event["pool"] == "H POOL" and event["gym"] == "South Gym"
+    assert event["start"] == datetime(2026, 10, 7, 20, 0)
+    assert event["pool_teams"] == [
+        {"name": "H Team 1", "normalized_name": "h team 1"},
+        {"name": "H Team 2", "normalized_name": "h team 2"},
+        {"name": "H Team 4", "normalized_name": "h team 4"},
+    ]
+
+
+def test_flattened_reduced_week_handles_arbitrarily_omitted_pools():
+    from src.parser import ScheduleParser
+    event = ScheduleParser(
+        flattened_text(["A", "C", "F", "H"], "F"), team_names=["Configured Team"], gyms=["North Gym", "South Gym"]
+    ).parse()[0]
+    assert event["pool"] == "F POOL" and event["gym"] == "South Gym"
+    assert event["start"] == datetime(2026, 10, 7, 20, 0)

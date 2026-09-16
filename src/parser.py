@@ -143,6 +143,114 @@ class ScheduleParser:
             result.append({"name": team["name"], "normalized_name": normalized})
         return result
 
+    def _append_matching_events(self, teams, gym, pool, start_raw, end_raw):
+        """Append configured-team events for one already reconstructed session."""
+        if not (start_raw and end_raw and self.current_date):
+            return
+        start_24 = self._pm_to_24h(start_raw)
+        end_24 = self._pm_to_24h(end_raw)
+        start_dt = datetime.strptime(f"{self.current_date} {start_24}", "%Y-%m-%d %H:%M")
+        end_dt = datetime.strptime(f"{self.current_date} {end_24}", "%Y-%m-%d %H:%M")
+        pool_teams = self._pool_teams(teams)
+        for team in teams:
+            alias = self._matched_alias(team["name"])
+            if not alias:
+                continue
+            LOG.info('Schedule team %r matched configured alias %r', team["name"], alias)
+            # A team has one logical scheduled session per date.  Gym, pool and
+            # time are mutable revision data, not identity.
+            session_key = (self.current_date.isoformat(), self._norm_team(team["name"]))
+            self.session_counts[session_key] = self.session_counts.get(session_key, 0) + 1
+            stable_uid = f"volleyball-schedule-monitor-{self.current_date:%Y%m%d}-{self._norm_team(team['name']).replace(' ', '-')}-{self.session_counts[session_key]}"
+            self.events.append({
+                "uid": stable_uid,
+                "source_team": team["name"],
+                "date": self.current_date.isoformat(),
+                "season": season_for_date(self.current_date),
+                "summary": f"{team['name']} Volleyball",
+                "description": f"Team: {team['name']}; Gym: {gym}, Pool: {pool}",
+                "start": start_dt,
+                "end": end_dt,
+                "gym": gym,
+                "pool": pool,
+                "pool_position": team["num"],
+                "pool_teams": pool_teams,
+            })
+
+    def _flattened_blocks(self):
+        """Reconstruct pdfminer output where KVA columns are flattened by row.
+
+        This layout places every gym/pool heading before a repeated numeric slot
+        run, then the team names, and finally one time range per session.  It is
+        accepted only when those independent counts agree.
+        """
+        blocks, gym = [], None
+        for line in self.lines:
+            for configured_gym in self.gyms:
+                if line.casefold().startswith(configured_gym.casefold()):
+                    gym = configured_gym
+                    break
+            pool_match = re.match(r"^\s*([A-Z])\s+POOL(?:\s*[-–].*)?\s*$", line, re.IGNORECASE)
+            if pool_match and gym:
+                blocks.append((gym, f"{pool_match.group(1).upper()} POOL"))
+        if not blocks:
+            return []
+
+        # Find the longest contiguous run of slot numbers.  Matchup values such
+        # as "1v5" deliberately do not qualify.
+        runs, run = [], []
+        for index, line in enumerate(self.lines):
+            if re.fullmatch(r"\d+", line):
+                run.append((index, line))
+            elif run:
+                runs.append(run)
+                run = []
+        if run:
+            runs.append(run)
+        if not runs:
+            return []
+        slots = max(runs, key=len)
+        block_count = len(blocks)
+        if len(slots) < block_count or len(slots) % block_count:
+            return []
+        teams_per_block = len(slots) // block_count
+        slot_pattern = [value for _, value in slots[:teams_per_block]]
+        if not slot_pattern or any(
+            [value for _, value in slots[offset:offset + teams_per_block]] != slot_pattern
+            for offset in range(0, len(slots), teams_per_block)
+        ):
+            return []
+
+        team_start = slots[-1][0] + 1
+        team_count = block_count * teams_per_block
+        team_names = self.lines[team_start:team_start + team_count]
+        if len(team_names) != team_count or any(
+            re.fullmatch(r"\d+", name) or re.search(r"\d+v\d+", name, re.IGNORECASE)
+            for name in team_names
+        ):
+            return []
+        time_pattern = re.compile(r"(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})")
+        times = [match.groups() for line in self.lines[team_start + team_count:] for match in [time_pattern.search(line)] if match]
+        if len(times) < block_count:
+            return []
+
+        return [
+            (gym_name, pool, [
+                {"num": slot_pattern[position], "name": team_names[block_index * teams_per_block + position]}
+                for position in range(teams_per_block)
+            ], *times[block_index])
+            for block_index, (gym_name, pool) in enumerate(blocks)
+        ]
+
+    def _parse_flattened_layout(self):
+        for line in self.lines:
+            if self.detect_date(line):
+                break
+        if not self.current_date:
+            return
+        for gym, pool, teams, start_raw, end_raw in self._flattened_blocks():
+            self._append_matching_events(teams, gym, pool, start_raw, end_raw)
+
     @staticmethod
     def _pm_to_24h(tstr: str) -> str:
         hour, minute = map(int, tstr.split(":"))
@@ -173,46 +281,13 @@ class ScheduleParser:
                 block, next_i, gym_for_block, pool_for_block = self.extract_block(i)
                 start_raw, end_raw = self.extract_time(block)
                 teams = self.extract_teams(block)
-                pool_teams = self._pool_teams(teams)
-
-                if start_raw and end_raw and self.current_date:
-                    start_24 = self._pm_to_24h(start_raw)
-                    end_24 = self._pm_to_24h(end_raw)
-
-                    start_dt = datetime.strptime(
-                        f"{self.current_date} {start_24}", "%Y-%m-%d %H:%M"
-                    )
-                    end_dt = datetime.strptime(
-                        f"{self.current_date} {end_24}", "%Y-%m-%d %H:%M"
-                    )
-
-                    for t in teams:
-                        alias = self._matched_alias(t["name"])
-                        if alias:
-                            LOG.info('Schedule team %r matched configured alias %r', t["name"], alias)
-                            # A team has one logical scheduled session per date.  Gym,
-                            # pool and time are mutable revision data, not identity.
-                            session_key = (self.current_date.isoformat(), self._norm_team(t["name"]))
-                            self.session_counts[session_key] = self.session_counts.get(session_key, 0) + 1
-                            stable_uid = f"volleyball-schedule-monitor-{self.current_date:%Y%m%d}-{self._norm_team(t['name']).replace(' ', '-')}-{self.session_counts[session_key]}"
-                            self.events.append({
-                                "uid": stable_uid,
-                                "source_team": t["name"],
-                                "date": self.current_date.isoformat(),
-                                "season": season_for_date(self.current_date),
-                                "summary": f"{t['name']} Volleyball",
-                                "description": f"Team: {t['name']}; Gym: {gym_for_block}, Pool: {pool_for_block}",
-                                "start": start_dt,
-                                "end": end_dt,
-                                "gym": gym_for_block,
-                                "pool": pool_for_block,
-                                "pool_position": t["num"],
-                                "pool_teams": pool_teams,
-                            })
+                self._append_matching_events(teams, gym_for_block, pool_for_block, start_raw, end_raw)
 
                 i = next_i
                 continue
 
             i += 1
 
+        if not self.events:
+            self._parse_flattened_layout()
         return self.events
