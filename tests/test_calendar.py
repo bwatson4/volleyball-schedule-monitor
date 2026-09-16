@@ -1,14 +1,40 @@
 from datetime import datetime
 from unittest.mock import MagicMock
 import pytest
+from caldav.lib.error import AuthorizationError, NotFoundError, ResponseError
 from src.calendar import CalendarManager
 
 def event(uid="a"):
     return {"uid":uid,"summary":"match","description":"d","start":datetime(2026,1,1,19),"end":datetime(2026,1,1,20)}
 
-def test_lookup_failure_is_propagated_not_treated_as_absent():
-    calendar = MagicMock(); calendar.event_by_url.side_effect = OSError("network")
-    with pytest.raises(OSError): CalendarManager(client=MagicMock(), calendar=calendar).add_or_update_event(event())
+@pytest.mark.parametrize("error", [AuthorizationError(reason="Forbidden"), OSError("network"), ResponseError(reason="server error")])
+def test_non_not_found_lookup_failures_are_propagated(error):
+    calendar = MagicMock(); calendar.event_by_url.side_effect = error
+    with pytest.raises(type(error)): CalendarManager(client=MagicMock(), calendar=calendar).add_or_update_event(event())
+    calendar.add_event.assert_not_called()
+
+
+def test_not_found_lookup_creates_event_at_stable_href():
+    calendar = MagicMock()
+    calendar.url = "https://calendar.example/"
+    calendar.event_by_url.side_effect = NotFoundError(reason="Not Found")
+
+    CalendarManager(client=MagicMock(), calendar=calendar).add_or_update_event(event("logical-1"))
+
+    calendar.event_by_url.assert_called_once_with("https://calendar.example/logical-1.ics")
+    calendar.add_event.assert_called_once()
+    assert calendar.add_event.call_args.kwargs["href"] == "logical-1.ics"
+
+
+def test_existing_event_is_updated_without_creating_duplicate():
+    existing = Remote(b"old")
+    calendar = MagicMock()
+    calendar.url = "https://calendar.example/"
+    calendar.event_by_url.return_value = existing
+
+    CalendarManager(client=MagicMock(), calendar=calendar).add_or_update_event(event("logical-1"))
+
+    assert existing.saved == 1
     calendar.add_event.assert_not_called()
 
 def test_same_day_event_ids_are_distinct():
@@ -31,6 +57,27 @@ class FakeCalendar:
     def date_search(self, **_kwargs): return self.remote
     def event_by_url(self, _url): return None
     def add_event(self, payload, href): self.added.append((payload, href))
+
+
+class InMemoryCalendar:
+    url = "https://calendar.example/"
+
+    def __init__(self):
+        self.events, self.added = {}, []
+
+    def date_search(self, **_kwargs):
+        return list(self.events.values())
+
+    def event_by_url(self, url):
+        try:
+            return self.events[url]
+        except KeyError:
+            raise NotFoundError(url=url, reason="Not Found")
+
+    def add_event(self, payload, href):
+        remote = Remote(payload)
+        self.events[self.url + href] = remote
+        self.added.append((payload, href))
 
 
 def managed_remote(data):
@@ -59,3 +106,27 @@ def test_reconciliation_adds_and_partial_delete_failure_is_propagated_for_retry(
     with pytest.raises(OSError):
         CalendarManager(client=MagicMock(), calendar=calendar).add_or_update_events([new])
     assert calendar.added  # add was safe and repeatable; state remains incomplete
+
+
+def test_repeated_identical_sync_creates_one_event_then_updates_it():
+    calendar = InMemoryCalendar()
+    manager = CalendarManager(client=MagicMock(), calendar=calendar)
+    data = event("logical-1")
+
+    manager.add_or_update_event(data)
+    manager.add_or_update_event(data)
+
+    assert [href for _, href in calendar.added] == ["logical-1.ics"]
+    assert calendar.events["https://calendar.example/logical-1.ics"].saved == 1
+
+
+def test_multiple_events_create_once_and_reconcile_on_repeated_sync():
+    calendar = InMemoryCalendar()
+    manager = CalendarManager(client=MagicMock(), calendar=calendar)
+    events = [event("logical-1"), event("logical-2")]
+
+    manager.add_or_update_events(events)
+    manager.add_or_update_events(events)
+
+    assert sorted(href for _, href in calendar.added) == ["logical-1.ics", "logical-2.ics"]
+    assert all(remote.saved == 1 for remote in calendar.events.values())

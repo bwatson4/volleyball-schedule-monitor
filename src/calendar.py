@@ -2,6 +2,7 @@
 from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from caldav import DAVClient
+from caldav.lib.error import NotFoundError
 from icalendar import Alarm, Calendar, Event
 from config import CALDAV_TIMEOUT_SECONDS, CALENDAR_INDEX, CALENDAR_NAME, ICLOUD_APP_PASSWORD, ICLOUD_USERNAME
 
@@ -38,7 +39,13 @@ class CalendarManager:
         self._connect()
         # Stable resource name means retries address exactly the same server object.
         url = str(self.calendar.url).rstrip("/") + "/" + data["uid"] + ".ics"
-        existing = self.calendar.event_by_url(url)  # exceptions are intentional: unknown != absent
+        try:
+            existing = self.calendar.event_by_url(url)
+        except NotFoundError:
+            # CalDAV represents a missing resource as an HTTP 404 exception.
+            # It is the one lookup failure that means this stable href can be
+            # safely created; all other failures remain visible to the caller.
+            existing = None
         payload = self._calendar_payload(data).to_ical()
         if existing:
             existing.data = payload; existing.save()
