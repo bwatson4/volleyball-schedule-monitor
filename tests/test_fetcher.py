@@ -36,6 +36,36 @@ def test_schedule_link_context_can_identify_wordpress_adjacent_anchor(tmp_path):
     assert PDFFetcher(tmp_path, session=session).get_schedule_urls() == ["https://kvapack.ca/uploads/wed"]
 
 
+def test_weekly_schedule_is_preferred_over_legacy_links_and_resolves_relative_urls(tmp_path):
+    page = response(text='''
+      <h2>Monday Night</h2><a href="/uploads/monday.pdf">Schedule - Click Here</a>
+      <h2>Wednesday Night - Recreational</h2>
+      <a href="documents/current-weekly-schedule">Weekly Schedule</a>
+      <a href="/uploads/last-season.pdf">Schedule - Click Here</a>
+      <h2>Thursday Night</h2><a href="/uploads/thursday">Weekly Schedule</a>
+    ''')
+    session = MagicMock(); session.get.return_value = page
+    urls = PDFFetcher(tmp_path, keyword="wednesday night", page_url="https://kvapack.ca/adult-indoor/", session=session).get_schedule_urls()
+    assert urls == [
+        "https://kvapack.ca/adult-indoor/documents/current-weekly-schedule",
+        "https://kvapack.ca/uploads/thursday",
+        "https://kvapack.ca/uploads/last-season.pdf",
+        "https://kvapack.ca/uploads/monday.pdf",
+    ]
+
+
+def test_weekly_schedule_url_without_pdf_suffix_is_downloaded_as_pdf(tmp_path):
+    page = response(text='<h2>Wednesday Night</h2><a href="/document?id=current">Weekly Schedule</a>')
+    document = response([b"%PDF-1.7 weekly schedule"], {"Content-Type": "application/pdf"}, url="https://cdn.example.org/download/opaque-token")
+    session = MagicMock(); session.get.side_effect = [page, document]
+    fetcher = PDFFetcher(tmp_path, keyword="wednesday night", session=session)
+    url = fetcher.get_schedule_urls()[0]
+    item = fetcher.download(url)
+    assert url == "https://kvapack.ca/document?id=current"
+    assert item.url == "https://cdn.example.org/download/opaque-token"
+    assert item.path.read_bytes().startswith(b"%PDF-")
+
+
 def test_download_rejects_html_and_oversized_content_but_accepts_pdf_with_poor_content_type(tmp_path):
     session = MagicMock()
     session.get.return_value = response([b"<html>no</html>"], {"Content-Type": "text/html"})

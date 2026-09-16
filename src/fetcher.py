@@ -45,8 +45,26 @@ class PDFFetcher:
         self.pdf_dir, self.keyword, self.page_url = Path(pdf_dir), keyword, page_url
         self.session, self.timeout, self.max_bytes = session or requests.Session(), timeout, max_bytes
 
+    def _league_context(self, anchor) -> str:
+        """Return the nearest preceding league heading, when WordPress has one."""
+        heading = anchor.find_previous(["h1", "h2", "h3", "h4", "h5", "h6"])
+        return heading.get_text(" ", strip=True).casefold() if heading else ""
+
+    def _is_configured_league(self, anchor) -> bool:
+        # KEYWORD is historically "wednesday night".  The stable part of a
+        # league heading is its day name, while remaining callers may pass a
+        # generic keyword such as "schedule".
+        day_names = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
+        requested_days = day_names.intersection(self.keyword.casefold().split())
+        return bool(requested_days.intersection(self._league_context(anchor).split()))
+
     def get_schedule_urls(self) -> list[str]:
-        """Return unique schedule-like anchors in page order, never trusting a suffix."""
+        """Return ranked, schedule-like anchors without trusting URL suffixes.
+
+        KVA has used both icon links adjacent to "Schedule - Click Here" and
+        named links such as "Weekly Schedule".  Keep the former as a legacy
+        fallback, but rank a named weekly link ahead of noisy icon anchors.
+        """
         response = self.session.get(self.page_url, headers=HEADERS, timeout=self.timeout)
         try:
             response.raise_for_status()
@@ -54,7 +72,8 @@ class PDFFetcher:
         finally:
             response.close()
 
-        urls: list[str] = []
+        candidates: list[tuple[int, int, str]] = []
+        seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
             # KVA's WordPress markup may put the visible phrase beside an emoji
             # link, so include a small parent context without raw-HTML matching.
@@ -63,18 +82,36 @@ class PDFFetcher:
             if "standing" in own_lowered or "registration" in own_lowered:
                 continue
             parent_text = anchor.parent.get_text(" ", strip=True) if anchor.parent and anchor.parent.name not in {"[document]", "html", "body"} else ""
-            context = own_context if "schedule" in own_lowered else parent_text
-            if "schedule" not in context.casefold():
+            parent_lowered = parent_text.casefold()
+            if "standing" in parent_lowered or "registration" in parent_lowered:
+                continue
+            # Directly named links are reliable.  Parent-context matches retain
+            # compatibility with prior WordPress emoji/image link markup.
+            weekly = "weekly schedule" in own_lowered or "weekly schedule" in parent_lowered
+            configured_league = self._is_configured_league(anchor)
+            if weekly and configured_league:
+                priority = 0
+            elif weekly:
+                priority = 1
+            elif "schedule" in own_lowered and configured_league:
+                priority = 2
+            elif "schedule" in own_lowered:
+                priority = 3
+            elif "schedule" in parent_lowered:
+                priority = 4
+            else:
                 continue
             resolved = urljoin(self.page_url, anchor["href"])
             if not _safe_http_url(resolved):
                 LOG.warning("Rejected unsafe schedule candidate URL: %s", resolved)
                 continue
-            if resolved not in urls:
-                urls.append(resolved)
-            if len(urls) >= MAX_CANDIDATES:
-                LOG.warning("Schedule candidate limit reached (%d)", MAX_CANDIDATES)
-                break
+            if resolved not in seen:
+                seen.add(resolved)
+                candidates.append((priority, len(candidates), resolved))
+        candidates.sort(key=lambda item: item[:2])
+        urls = [url for _priority, _order, url in candidates[:MAX_CANDIDATES]]
+        if len(candidates) > MAX_CANDIDATES:
+            LOG.warning("Schedule candidate limit reached (%d)", MAX_CANDIDATES)
         LOG.info("KVA page reachable; found %d schedule-link candidate(s)", len(urls))
         return urls
 

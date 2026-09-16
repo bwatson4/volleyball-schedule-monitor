@@ -70,11 +70,12 @@ def failure(state, stage):
     state.set_failure(stage, RuntimeError(f"{stage} failed"))
 
 
-def test_website_failure_clears_after_empty_link_result(monkeypatch, tmp_path):
+def test_reachable_website_with_no_schedule_link_records_discovery_failure(monkeypatch, tmp_path):
     fetcher, state = setup(monkeypatch, tmp_path, {})
     failure(state, "website/download")
-    assert main.run(fetcher=fetcher, state=state)
-    assert "last_failure" not in state.data
+    assert not main.run(fetcher=fetcher, state=state)
+    assert state.data["last_failure"]["stage"] == "schedule/discovery"
+    assert "website reachable" in state.data["last_failure"]["message"]
     assert state.data["last_website_scan"]
     assert state.data["last_attempted_run"]
 
@@ -83,9 +84,10 @@ def test_website_failure_clears_during_candidate_processing(monkeypatch, tmp_pat
     document = selected_document(tmp_path)
     fetcher, state = setup(monkeypatch, tmp_path, {document.url: document})
     failure(state, "website/download")
-    assert main.run(fetcher=fetcher, parser_class=parser(events=False), state=state)
+    assert not main.run(fetcher=fetcher, parser_class=parser(events=False), state=state)
     assert fetcher.downloads == [document.url]
-    assert "last_failure" not in state.data
+    assert state.data["last_failure"]["stage"] == "parse"
+    assert state.data["last_schedule_document_found"]
 
 
 def test_website_failure_clears_during_nonmatching_candidate_processing(monkeypatch, tmp_path):
@@ -93,9 +95,9 @@ def test_website_failure_clears_during_nonmatching_candidate_processing(monkeypa
     fetcher, state = setup(monkeypatch, tmp_path, {document.url: document})
     monkeypatch.setattr(main, "_pdf_text", lambda _path: "Monday Team")
     failure(state, "website/download")
-    assert main.run(fetcher=fetcher, state=state)
+    assert not main.run(fetcher=fetcher, state=state)
     assert fetcher.downloads == [document.url]
-    assert "last_failure" not in state.data
+    assert state.data["last_failure"]["stage"] == "schedule/discovery"
 
 
 def test_new_website_failure_replaces_previous_failure(monkeypatch, tmp_path):
@@ -112,7 +114,7 @@ def test_new_website_failure_replaces_previous_failure(monkeypatch, tmp_path):
 def test_parse_failure_is_not_cleared_by_website_success(monkeypatch, tmp_path):
     fetcher, state = setup(monkeypatch, tmp_path, {})
     failure(state, "parse")
-    assert main.run(fetcher=fetcher, state=state)
+    assert not main.run(fetcher=fetcher, state=state)
     assert state.data["last_failure"]["stage"] == "parse"
 
 

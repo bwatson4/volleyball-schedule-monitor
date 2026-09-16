@@ -40,6 +40,20 @@ class ScheduleState:
         self.data["last_website_scan"] = now()
         self._clear_failure("website/download")
         self.save()
+    def schedule_document_found(self):
+        """Record that a current, configured-league document was downloaded."""
+        self.data["last_schedule_document_found"] = now()
+        self.data.pop("last_schedule_discovery_failure", None)
+        self._clear_failure("schedule/discovery")
+        self.save()
+    def schedule_discovery_failed(self, exc):
+        """Record a missing current schedule without masking a prior stage error."""
+        failure = {"stage": "schedule/discovery", "message": str(exc), "at": now()}
+        self.data["last_schedule_discovery_failure"] = failure
+        previous = self.data.get("last_failure")
+        if not previous or previous.get("stage") in {"website/download", "schedule/discovery"}:
+            self.data["last_failure"] = failure
+        self.save()
     def begin_candidate(self, digest, pdf_path, source_url):
         candidate = self.data.get("candidate", {})
         if candidate.get("hash") != digest:

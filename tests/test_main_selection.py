@@ -66,8 +66,12 @@ def test_revised_selected_schedule_hash_is_processed(monkeypatch, tmp_path):
 def test_no_matching_league_or_ambiguous_secondary_match_is_a_clean_noop(monkeypatch, tmp_path):
     monday = DownloadedPDF("https://x/monday", Path("monday"), "a")
     fetcher = configure(monkeypatch, {monday.url: monday}, {"monday": "Monday Example Team"})
-    assert main.run(fetcher=fetcher, parser_class=event_parser, state=ScheduleState(tmp_path / "none.json"))
+    missing = ScheduleState(tmp_path / "none.json")
+    assert not main.run(fetcher=fetcher, parser_class=event_parser, state=missing)
+    assert missing.data["last_failure"]["stage"] == "schedule/discovery"
     first = DownloadedPDF("https://x/wed-a", Path("wed-a"), "a")
     second = DownloadedPDF("https://x/wed-b", Path("wed-b"), "b")
     fetcher = configure(monkeypatch, {first.url: first, second.url: second}, {"wed-a": "Wednesday Example Team", "wed-b": "Wednesday Example Team 2"})
-    assert main.run(fetcher=fetcher, parser_class=event_parser, state=ScheduleState(tmp_path / "ambiguous.json"))
+    ambiguous = ScheduleState(tmp_path / "ambiguous.json")
+    assert not main.run(fetcher=fetcher, parser_class=event_parser, state=ambiguous)
+    assert ambiguous.data["last_failure"]["stage"] == "schedule/discovery"
