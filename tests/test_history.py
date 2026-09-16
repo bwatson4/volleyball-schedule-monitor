@@ -175,6 +175,21 @@ def test_record_events_replaces_same_revision_transactionally(tmp_path):
     assert store.dashboard()["games"][0]["pool_teams"] == [{"team_normalized": "new team", "display_name": "New Team"}]
 
 
+def test_revision_retains_pool_slots_and_rotation_matrix(tmp_path):
+    store = HistoryStore(tmp_path / "history.sqlite3")
+    event = associated_game("rotation", "2026-09-02", [
+        {"name": "Team One", "normalized_name": "team one", "position": 1},
+        {"name": "Team Two", "normalized_name": "team two", "position": 2},
+    ]) | {"pool_position": "3", "rotation_matrix": [
+        {"round": "Game 1", "pairings": [(1, 3), (2, 4)]},
+    ]}
+    record_revision(store, "rotation", "2026-08-01T00:00:00+00:00", event)
+    stored = store.dashboard()["current_games"][0]
+    assert [(team["display_name"], team["pool_position"]) for team in stored["pool_teams"]] == [
+        ("Team One", "1"), ("Team Two", "2")]
+    assert stored["rotation_matrix"] == [{"round": "Game 1", "pairings": [[1, 3], [2, 4]]}]
+
+
 def test_season_scopes_new_returning_and_all_time_encounters(tmp_path):
     store = HistoryStore(tmp_path / "history.sqlite3")
     record_revision(store, "old", "2026-01-01T00:00:00+00:00", associated_game("old", "2026-03-12", ["Team Alpha"]))

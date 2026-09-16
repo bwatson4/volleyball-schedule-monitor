@@ -26,6 +26,9 @@ class ScheduleParser:
         self.current_pool = None
         self.uid = None
         self.session_counts = {}
+        # This table describes the current session's order of play.  It is
+        # deliberately separate from pool membership/history semantics.
+        self.rotation_matrix = self._parse_rotation_matrix()
     
     @staticmethod
     def _norm_team(s: str) -> str:
@@ -43,6 +46,40 @@ class ScheduleParser:
 
     def _normalize_lines(self, text):
         return [ln.strip() for ln in text.splitlines() if ln.strip()]
+
+    def _parse_rotation_matrix(self):
+        """Read KVA's optional Game/Round matchup matrix without assumptions.
+
+        PDF text commonly arrives as either normal labelled rows or flattened
+        columns (all game labels, then the first matchup row, then the second).
+        A malformed or absent matrix simply returns no rotation data.
+        """
+        label = re.compile(r"\b(?:game|round)\s*(\d+)\b", re.IGNORECASE)
+        matchup = re.compile(r"(?<!\d)(\d+)\s*[vV]\s*(\d+)(?!\d)")
+        labels = [(index, match.group(1)) for index, line in enumerate(self.lines)
+                  for match in [label.search(line)] if match]
+        if not labels:
+            return []
+        rounds = []
+        for offset, (index, number) in enumerate(labels):
+            end = labels[offset + 1][0] if offset + 1 < len(labels) else len(self.lines)
+            pairings = [(int(a), int(b)) for line in self.lines[index:end]
+                        for a, b in matchup.findall(line)]
+            if pairings:
+                rounds.append({"round": f"Game {number}", "pairings": pairings})
+        if len(rounds) == len(labels):
+            return rounds
+
+        # Flattened pdfminer columns: Game 1..N, then each matchup row across
+        # all games.  Preserve label order rather than assuming five rounds.
+        first_label = labels[0][0]
+        tokens = [(int(a), int(b)) for line in self.lines[first_label:]
+                  for a, b in matchup.findall(line)]
+        count = len(labels)
+        if not tokens or len(tokens) % count:
+            return []
+        return [{"round": f"Game {number}", "pairings": tokens[index::count]}
+                for index, (_, number) in enumerate(labels)]
 
     def detect_date(self, line):
         date_match = re.search(r"([A-Z][a-z]+ \d{1,2}, \d{4})", line)
@@ -140,7 +177,8 @@ class ScheduleParser:
             if not normalized or normalized in configured or normalized in seen:
                 continue
             seen.add(normalized)
-            result.append({"name": team["name"], "normalized_name": normalized})
+            result.append({"name": team["name"], "normalized_name": normalized,
+                           "position": int(team["num"])})
         return result
 
     def _append_matching_events(self, teams, gym, pool, start_raw, end_raw):
@@ -175,6 +213,7 @@ class ScheduleParser:
                 "pool": pool,
                 "pool_position": team["num"],
                 "pool_teams": pool_teams,
+                "rotation_matrix": self.rotation_matrix,
             })
 
     def _flattened_blocks(self):

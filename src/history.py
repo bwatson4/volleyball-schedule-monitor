@@ -7,6 +7,7 @@ non-fatal so a full disk cannot strand a schedule candidate mid-processing.
 from __future__ import annotations
 
 import sqlite3
+import json
 from datetime import date, datetime
 from pathlib import Path
 
@@ -50,6 +51,7 @@ class HistoryStore:
                     gym TEXT,
                     pool TEXT,
                     pool_position TEXT,
+                    rotation_matrix TEXT,
                     summary TEXT NOT NULL,
                     PRIMARY KEY (content_hash, logical_id)
                 );
@@ -58,6 +60,7 @@ class HistoryStore:
                     logical_id TEXT NOT NULL,
                     team_normalized TEXT NOT NULL,
                     display_name TEXT NOT NULL,
+                    pool_position TEXT,
                     PRIMARY KEY (content_hash, logical_id, team_normalized),
                     FOREIGN KEY (content_hash, logical_id)
                         REFERENCES parsed_game(content_hash, logical_id)
@@ -72,6 +75,11 @@ class HistoryStore:
             columns = {row["name"] for row in db.execute("PRAGMA table_info(parsed_game)")}
             if "season" not in columns:
                 db.execute("ALTER TABLE parsed_game ADD COLUMN season TEXT")
+            if "rotation_matrix" not in columns:
+                db.execute("ALTER TABLE parsed_game ADD COLUMN rotation_matrix TEXT")
+            team_columns = {row["name"] for row in db.execute("PRAGMA table_info(parsed_game_team)")}
+            if "pool_position" not in team_columns:
+                db.execute("ALTER TABLE parsed_game_team ADD COLUMN pool_position TEXT")
             missing = list(db.execute("SELECT rowid, game_date FROM parsed_game WHERE season IS NULL OR season=''"))
             db.executemany("UPDATE parsed_game SET season=? WHERE rowid=?", [
                 (season_for_date(row["game_date"]), row["rowid"]) for row in missing
@@ -94,35 +102,37 @@ class HistoryStore:
             db.execute("DELETE FROM parsed_game_team WHERE content_hash=?", (content_hash,))
             db.execute("DELETE FROM parsed_game WHERE content_hash=?", (content_hash,))
             db.executemany("""INSERT INTO parsed_game
-                (content_hash, logical_id, source_team, game_date, season, start_time, end_time, gym, pool, pool_position, summary)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", [
+                (content_hash, logical_id, source_team, game_date, season, start_time, end_time, gym, pool, pool_position, rotation_matrix, summary)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", [
                 (content_hash, event["uid"], event["source_team"], event["date"], season_for_date(event["date"]), event["start"].isoformat(),
                  event["end"].isoformat(), event.get("gym"), event.get("pool"),
-                 event.get("pool_position"), event["summary"])
+                 event.get("pool_position"), json.dumps(event.get("rotation_matrix") or []), event["summary"])
                 for event in events
             ])
             db.executemany("""INSERT INTO parsed_game_team
-                (content_hash, logical_id, team_normalized, display_name)
-                VALUES (?, ?, ?, ?)""", [
-                (content_hash, event["uid"], normalized, display)
+                (content_hash, logical_id, team_normalized, display_name, pool_position)
+                VALUES (?, ?, ?, ?, ?)""", [
+                (content_hash, event["uid"], normalized, display, position)
                 for event in events
-                for normalized, display in self._event_teams(event)
+                for normalized, display, position in self._event_teams(event)
             ])
 
     @staticmethod
-    def _event_teams(event: dict) -> list[tuple[str, str]]:
+    def _event_teams(event: dict) -> list[tuple[str, str, str | None]]:
         """Accept structured parser data while reading pre-feature callers too."""
-        result: list[tuple[str, str]] = []
+        result: list[tuple[str, str, str | None]] = []
         seen: set[str] = set()
         for team in event.get("pool_teams", []):
             if isinstance(team, dict):
                 display = str(team.get("name") or team.get("display_name") or "")
                 normalized = normalize_team(team.get("normalized_name") or team.get("team_normalized") or display)
+                position = team.get("position")
             else:
                 display, normalized = str(team), normalize_team(team)
+                position = None
             if normalized and display and normalized not in seen:
                 seen.add(normalized)
-                result.append((normalized, display))
+                result.append((normalized, display, str(position) if position is not None else None))
         return result
 
     def record_stage(self, content_hash: str, stage: str, at: str) -> None:
@@ -158,10 +168,15 @@ class HistoryStore:
             ) WHERE observation_rank=1 ORDER BY game_date, start_time""")]
             for collection in (games, current_games, analytics_games):
                 for game in collection:
+                    game["rotation_matrix"] = json.loads(game.pop("rotation_matrix") or "[]")
                     game["pool_teams"] = [dict(row) for row in db.execute("""
-                        SELECT team_normalized, display_name FROM parsed_game_team
-                        WHERE content_hash=? AND logical_id=? ORDER BY display_name COLLATE NOCASE
+                        SELECT team_normalized, display_name, pool_position FROM parsed_game_team
+                        WHERE content_hash=? AND logical_id=?
+                        ORDER BY CAST(pool_position AS INTEGER), display_name COLLATE NOCASE
                     """, (game["content_hash"], game["logical_id"]))]
+                    for team in game["pool_teams"]:
+                        if team["pool_position"] is None:
+                            team.pop("pool_position")
 
         self._add_team_statistics(analytics_games)
         analytics_by_id = {game["logical_id"]: game for game in analytics_games}

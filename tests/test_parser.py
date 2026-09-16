@@ -100,8 +100,8 @@ def test_pool_teams_preserve_display_spelling_and_exclude_configured_aliases():
     text = "Example Gym December 3, 2026\nA POOL\n1 Example Team 7:00-8:00\n2  TEAM   ALPHA\n3 Team Bravo"
     event = ScheduleParser(text, team_names=["example  team", "Example Team"], gyms=["Example Gym"], pools=["A POOL"]).parse()[0]
     assert event["pool_teams"] == [
-        {"name": "TEAM ALPHA", "normalized_name": "team alpha"},
-        {"name": "Team Bravo", "normalized_name": "team bravo"},
+        {"name": "TEAM ALPHA", "normalized_name": "team alpha", "position": 2},
+        {"name": "Team Bravo", "normalized_name": "team bravo", "position": 3},
     ]
 
 def test_alias_choice_does_not_change_stable_event_identity():
@@ -237,11 +237,43 @@ def test_current_flattened_wednesday_schedule_reconstructs_chewblaccas_session()
     assert event["start"] == datetime(2026, 9, 16, 20, 30)
     assert event["end"] == datetime(2026, 9, 16, 22, 0)
     assert event["pool_teams"] == [
-        {"name": "Block Busters", "normalized_name": "block busters"},
-        {"name": "Back Seat Sets", "normalized_name": "back seat sets"},
-        {"name": "To Kill A Rocking Serve", "normalized_name": "to kill a rocking serve"},
-        {"name": "Spikeachu", "normalized_name": "spikeachu"},
+        {"name": "Block Busters", "normalized_name": "block busters", "position": 1},
+        {"name": "Back Seat Sets", "normalized_name": "back seat sets", "position": 2},
+        {"name": "To Kill A Rocking Serve", "normalized_name": "to kill a rocking serve", "position": 4},
+        {"name": "Spikeachu", "normalized_name": "spikeachu", "position": 5},
     ]
+    assert event["rotation_matrix"] == [
+        {"round": "Game 1", "pairings": [(1, 5), (2, 3)]},
+        {"round": "Game 2", "pairings": [(1, 4), (3, 5)]},
+        {"round": "Game 3", "pairings": [(1, 3), (2, 4)]},
+        {"round": "Game 4", "pairings": [(1, 2), (4, 5)]},
+        {"round": "Game 5", "pairings": [(3, 4), (2, 5)]},
+    ]
+
+
+def test_rotation_matrix_accepts_spacing_and_case_variants():
+    from src.parser import ScheduleParser
+    text = """Example Gym December 3, 2026
+A POOL
+1 Configured Team 7:00-8:00
+2 Team Two
+3 Team Three
+Game 1: 1v2, 3 V 4
+Game 2: 1 v 3, 2v4"""
+    event = ScheduleParser(text, team_names=["Configured Team"], gyms=["Example Gym"]).parse()[0]
+    assert event["rotation_matrix"] == [
+        {"round": "Game 1", "pairings": [(1, 2), (3, 4)]},
+        {"round": "Game 2", "pairings": [(1, 3), (2, 4)]},
+    ]
+
+
+def test_missing_or_malformed_rotation_never_invalidates_assignment():
+    from src.parser import ScheduleParser
+    base = "Example Gym December 3, 2026\nA POOL\n1 Configured Team 7:00-8:00\n2 Team Two"
+    missing = ScheduleParser(base, team_names=["Configured Team"], gyms=["Example Gym"]).parse()
+    malformed = ScheduleParser(base + "\nGame 1: not a matchup", team_names=["Configured Team"], gyms=["Example Gym"]).parse()
+    assert len(missing) == len(malformed) == 1
+    assert missing[0]["rotation_matrix"] == malformed[0]["rotation_matrix"] == []
 
 
 def flattened_text(pools, target_pool):
@@ -264,9 +296,9 @@ def test_flattened_full_week_detects_eight_blocks_without_a_six_pool_assumption(
     assert event["pool"] == "H POOL" and event["gym"] == "South Gym"
     assert event["start"] == datetime(2026, 10, 7, 20, 0)
     assert event["pool_teams"] == [
-        {"name": "H Team 1", "normalized_name": "h team 1"},
-        {"name": "H Team 2", "normalized_name": "h team 2"},
-        {"name": "H Team 4", "normalized_name": "h team 4"},
+        {"name": "H Team 1", "normalized_name": "h team 1", "position": 1},
+        {"name": "H Team 2", "normalized_name": "h team 2", "position": 2},
+        {"name": "H Team 4", "normalized_name": "h team 4", "position": 4},
     ]
 
 

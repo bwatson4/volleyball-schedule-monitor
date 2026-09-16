@@ -113,11 +113,41 @@ def test_home_keeps_latest_weekly_assignment_visible_after_it_is_no_longer_futur
     assert "No future game" not in page and "20:30" not in page
 
 
-def test_pool_movement_chart_labels_one_point_per_weekly_game():
+def test_pool_movement_chart_shows_all_pool_bands_without_help_prose():
     from ui import _pool_chart
 
     chart = _pool_chart([{"pool": "C POOL", "pool_position": "3", "detected_at": "2026-08-01T00:00:00+00:00"}])
-    assert "One point per weekly game" in chart
+    assert all(letter in chart for letter in "ABCDEFGH")
+    assert "One point per weekly game" not in chart
+
+
+def test_home_renders_exact_rotation_and_summary_without_debug_prose():
+    from ui import _home_view
+    game = {"game_date": "2026-09-16", "start_time": "2026-09-16T20:30:00", "end_time": "2026-09-16T22:00:00",
+            "gym": "KCS", "pool": "D POOL", "pool_position": "3", "source_team": "Chewblaccas",
+            "pool_teams": [{"display_name": "Block Busters", "pool_position": "1"}, {"display_name": "Back Seat Sets", "pool_position": "2"},
+                           {"display_name": "To Kill A Rocking Serve", "pool_position": "4"}, {"display_name": "Spikeachu", "pool_position": "5"}],
+            "rotation_matrix": [{"round": f"Game {number}", "pairings": pairings} for number, pairings in enumerate(
+                [[(1, 5), (2, 3)], [(1, 4), (3, 5)], [(1, 3), (2, 4)], [(1, 2), (4, 5)], [(3, 4), (2, 5)]], 1)]}
+    page = _home_view({}, {"current_games": [game], "analytics_games": [game], "revisions": []})
+    assert "Your Rotation" in page and page.count("PLAY") == 4 and "SIT" in page
+    for opponent in ("Back Seat Sets", "Spikeachu", "Block Busters", "To Kill A Rocking Serve"):
+        assert f"vs {opponent}" in page
+    assert "Play 3 straight · Sit 1 · Play 1" in page
+    assert "One point per weekly game" not in page and "latest successfully parsed weekly assignment" not in page
+
+
+def test_rotation_resolution_does_not_assume_a_five_team_pool():
+    from ui import _rotation_rounds
+    game = {"pool_position": "2", "source_team": "Configured", "pool_teams": [
+        {"display_name": "One", "pool_position": "1"}, {"display_name": "Three", "pool_position": "3"},
+        {"display_name": "Four", "pool_position": "4"}], "rotation_matrix": [
+        {"round": "Game 1", "pairings": [[1, 2], [3, 4]]},
+        {"round": "Game 2", "pairings": [[1, 3], [2, 4]]},
+        {"round": "Game 3", "pairings": [[1, 4], [2, 3]]},
+    ]}
+    assert [(round_["status"], round_["opponent"]) for round_ in _rotation_rounds(game)] == [
+        ("PLAY", "One"), ("PLAY", "Four"), ("PLAY", "Three")]
 
 
 def test_home_history_and_settings_views_have_navigation_active_state_and_escape(monkeypatch):

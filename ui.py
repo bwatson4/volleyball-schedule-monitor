@@ -111,18 +111,18 @@ def _pool_chart(observations):
     for game in observations:
         pool = game.get("pool", ""); letter = pool[:1].upper()
         if "A" <= letter <= "Z": points.append((game.get("detected_at", ""), ord(letter) - ord("A"), pool, game.get("pool_position", "")))
-    if not points: return '<p class="muted">Pool Movement appears after the first successfully parsed schedule revision.</p>'
+    if not points: return '<div class="pool-scale" aria-label="Pool bands, A through H">A B C D E F G H</div><p class="muted">Pool Movement appears after the first successfully parsed schedule revision.</p>'
     points.sort(); width, height, padding = 760, 260, 42
-    max_rank, spread = max(rank for _, rank, _, _ in points), max(1, len(points) - 1)
+    max_rank, spread = 7, max(1, len(points) - 1)
     scale = (height - padding * 2) / max(1, max_rank)
     coords = [(padding + index * (width - padding * 2) / spread, padding + rank * scale) for index, (_, rank, _, _) in enumerate(points)]
-    guides = "".join(f'<line x1="{padding}" y1="{padding + rank * scale:.0f}" x2="{width-padding}" y2="{padding + rank * scale:.0f}" class="chart-guide"/><text x="8" y="{padding + rank * scale + 4:.0f}" class="chart-axis">{chr(ord("A") + rank)}</text>' for rank in range(min(max_rank, 7) + 1))
+    guides = "".join(f'<line x1="{padding}" y1="{padding + rank * scale:.0f}" x2="{width-padding}" y2="{padding + rank * scale:.0f}" class="chart-guide"/><text x="8" y="{padding + rank * scale + 4:.0f}" class="chart-axis">{chr(ord("A") + rank)}</text>' for rank in range(8))
     dots = "".join(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="5" class="chart-dot"><title>{_esc(_fmt(detected))}: {_esc(pool)} position {_esc(position)}</title></circle>' for (x, y), (detected, _, pool, position) in zip(coords, points))
     labels = "".join(f'<text x="{x:.0f}" y="{height-10}" text-anchor="middle" class="chart-label">{_esc(_fmt(detected).split(",")[0])}</text>' for (x, _), (detected, _, _, _) in zip(coords, points))
     line = " ".join(f"{x:.0f},{y:.0f}" for x, y in coords)
     svg = f'''<svg viewBox="0 0 {width} {height}" style="min-width:0" role="img" aria-label="Pool Movement, A is highest">
 <title>Pool Movement, A ranks above B</title>{guides}<polyline fill="none" class="chart-line" points="{line}"/>{dots}{labels}</svg>'''
-    return f'<div class="svg-wrap">{svg}</div><p class="muted">A ranks above B, B above C. One point per weekly game, using the latest successfully parsed observation.</p>'
+    return f'<div class="svg-wrap">{svg}</div>'
 
 def _schedule_rows(games):
     rows = "".join(f'<tr><td>{_esc(_game_date(game.get("game_date")))}</td><td>{_esc(_time_range(game))}</td><td>{_esc(game.get("gym"))}</td><td>{_esc(game.get("pool"))}</td><td>{_esc(game.get("pool_position"))}</td></tr>' for game in games)
@@ -146,17 +146,75 @@ def _teams_this_week(game):
         + (f'<small>{_esc(team.get("all_time_encounters"))} all-time meetings</small>' if team.get("all_time_encounters", 0) > team.get("encounter_number", 1) else "")
         + (f'<small>Last together: {_esc(_date(team.get("last_together")))}</small>' if team.get("last_together") else "") + "</li>"
         for team in teams)
-    return f'<section class="card teams-card"><h2>Teams in Your Pool</h2><p class="muted">KVA lists shared pool/session teams; this does not assert direct head-to-head fixtures.</p><ul class="team-list">{rows}</ul></section>'
+    return f'<section class="card teams-card"><h2>Teams in Your Pool</h2><ul class="team-list">{rows}</ul></section>'
+
+def _rotation_rounds(game):
+    """Resolve the configured position against an optional stored play matrix."""
+    if not game or not game.get("rotation_matrix"):
+        return []
+    try:
+        configured_position = int(game.get("pool_position"))
+    except (TypeError, ValueError):
+        return []
+    positions = {configured_position: game.get("source_team")}
+    for team in game.get("pool_teams", []):
+        try:
+            positions[int(team.get("position", team.get("pool_position")))] = team.get("name") or team.get("display_name")
+        except (TypeError, ValueError):
+            return []
+    resolved = []
+    for matrix_round in game["rotation_matrix"]:
+        pairings = matrix_round.get("pairings") if isinstance(matrix_round, dict) else None
+        if not isinstance(pairings, list):
+            return []
+        opponent = None
+        for pairing in pairings:
+            if not isinstance(pairing, (list, tuple)) or len(pairing) != 2:
+                return []
+            try:
+                first, second = map(int, pairing)
+            except (TypeError, ValueError):
+                return []
+            if configured_position == first: opponent = second
+            elif configured_position == second: opponent = first
+        if opponent is not None and not positions.get(opponent):
+            return []
+        resolved.append({"round": matrix_round.get("round") or f"Game {len(resolved) + 1}",
+                         "status": "PLAY" if opponent is not None else "SIT",
+                         "opponent": positions.get(opponent, "")})
+    return resolved
+
+def _rotation_summary(rounds):
+    runs = []
+    for item in rounds:
+        if runs and runs[-1][0] == item["status"]:
+            runs[-1][1] += 1
+        else:
+            runs.append([item["status"], 1])
+    return " · ".join(
+        f"{status.title()} {count}{' straight' if status == 'PLAY' and count > 1 else ''}"
+        for status, count in runs)
+
+def _your_rotation(game):
+    rounds = _rotation_rounds(game)
+    if not rounds:
+        return ""
+    items = "".join(
+        f'<li class="rotation-round {item["status"].lower()}"><span class="round-label">{_esc(item["round"])}</span>'
+        f'<b class="rotation-badge">{_esc(item["status"])}</b>'
+        f'<span class="opponent">{("vs " + _esc(item["opponent"])) if item["opponent"] else "Sits out"}</span></li>'
+        for item in rounds)
+    return f'<section class="rotation"><h3>Your Rotation</h3><ol class="rotation-list">{items}</ol><p class="rotation-summary">{_esc(_rotation_summary(rounds))}</p></section>'
 
 def _home_view(state, history):
     data = _dashboard_model(history); current = data["latest_assignment"]
     latest = data["revisions"][0] if data["revisions"] else {}
     if current:
-        game_content = f'<p class="date">{_esc(_game_date(current.get("game_date")))}</p><p class="next-time">{_esc(_time_range(current))}</p><p class="venue">{_esc(current.get("gym"))}</p><p>Pool <b>{_esc(current.get("pool"))}</b> · Position <b>{_esc(current.get("pool_position"))}</b></p>'
+        game_content = f'<p class="date">{_esc(_game_date(current.get("game_date")))}</p><p class="next-time">{_esc(_time_range(current))}</p><p class="venue">{_esc(current.get("gym"))}</p><p>Pool <b>{_esc(current.get("pool"))}</b> · Position <b>{_esc(current.get("pool_position"))}</b></p>{_your_rotation(current)}'
     else: game_content = '<p class="muted">No assignment is in the latest parsed schedule.</p>'
     status = f'<dl><dt>Current pool</dt><dd>{_esc(current.get("pool")) if current else "—"}</dd><dt>Current position</dt><dd>{_esc(current.get("pool_position")) if current else "—"}</dd><dt>Latest revision</dt><dd>{_esc(_fmt(latest.get("detected_at")))}</dd><dt>Calendar synced</dt><dd>{_esc(_fmt(latest.get("calendar_at")))}</dd><dt>Email sent</dt><dd>{_esc(_fmt(latest.get("email_at")))}</dd></dl>'
     most_common_time = _time(data["times"].most_common(1)[0][0]) if data["times"] else "—"
-    return f'''<div class="home-lead"><section class="card next-card"><h2>This Week’s Game</h2>{game_content}</section><section class="card status-card"><h2>Current Status</h2>{status}</section></div>{_teams_this_week(current)}<section class="card"><h2>Latest Weekly Schedule</h2><p class="muted">The latest successfully parsed weekly assignment is shown, even after its start time.</p><div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Gym</th><th>Pool</th><th>Position</th></tr></thead><tbody>{_schedule_rows(data["current_games"])}</tbody></table></div></section><div class="analytics-grid">{_bar_summary("Gym Breakdown", data["gyms"])}{_bar_summary("Time Slot Breakdown", data["times"], _time)}{_bar_summary("Pool Appearances", data["pools"])}<section class="card"><h3>Schedule Analytics</h3><p class="muted">These summaries use one latest observation per weekly session.</p><p><b>Most common start:</b> {_esc(most_common_time)}</p></section></div><section class="card movement-card"><h2>Pool Movement</h2><p class="muted">One point per weekly game.</p>{_pool_chart(data["pool_observations"])}</section>'''
+    return f'''<div class="home-lead"><section class="card next-card"><h2>This Week’s Game</h2>{game_content}</section><section class="card status-card"><h2>Current Status</h2>{status}</section></div>{_teams_this_week(current)}<section class="card"><h2>Latest Weekly Schedule</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Gym</th><th>Pool</th><th>Position</th></tr></thead><tbody>{_schedule_rows(data["current_games"])}</tbody></table></div></section><div class="analytics-grid">{_bar_summary("Gym Breakdown", data["gyms"])}{_bar_summary("Time Slot Breakdown", data["times"], _time)}{_bar_summary("Pool Appearances", data["pools"])}<section class="card"><h3>Schedule Analytics</h3><p><b>Most common start:</b> {_esc(most_common_time)}</p></section></div><section class="card movement-card"><h2>Pool Movement</h2>{_pool_chart(data["pool_observations"])}</section>'''
 
 def _history_view(state, history):
     revisions, failure, discovery_failure = history.get("revisions", []), state.get("last_failure"), state.get("last_schedule_discovery_failure")
@@ -206,7 +264,7 @@ def _page(view="home", season=None, message="", error=""):
     if view == "settings" and not settings["schedule_match_text"]: error = error or "schedule match text is required"
     failure = state.get("last_failure"); health = "Healthy" if not failure else f'Failure: {failure.get("stage", "processing")}'; status_class = "healthy" if not failure else "unhealthy"
     navigation = "".join(f'<a href="/?view={name}" class="{"active" if view == name else ""}" {"aria-current=\"page\"" if view == name else ""}>{name.title()}</a>' for name in ("home", "history", "teams", "settings"))
-    badge_css = '<style>.team-list{list-style:none;padding:0;margin:0}.team-list li{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;padding:.55rem 0;border-top:1px solid #e1e8eb}.team-list small{color:#5a6871}.team-badge{border:1px solid currentColor;border-radius:1rem;padding:.12rem .45rem;font-size:.8rem;font-weight:700}.team-badge.new{color:#12633d;background:#e6f4eb}.team-badge.same{color:#075b93;background:#e3f0f6}.team-badge.returning{color:#825500;background:#fff4d6}</style>'
+    badge_css = '<style>.team-list{list-style:none;padding:0;margin:0}.team-list li{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;padding:.55rem 0;border-top:1px solid #e1e8eb}.team-list small{color:#5a6871}.team-badge{border:1px solid currentColor;border-radius:1rem;padding:.12rem .45rem;font-size:.8rem;font-weight:700}.team-badge.new{color:#12633d;background:#e6f4eb}.team-badge.same{color:#075b93;background:#e3f0f6}.team-badge.returning{color:#825500;background:#fff4d6}.next-card{border-top:4px solid #0875b8}.rotation{margin-top:1.15rem;padding-top:.9rem;border-top:1px solid #e1e8eb}.rotation h3{text-transform:uppercase;letter-spacing:.08em;color:#53616a;font-size:.78rem}.rotation-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr));gap:.55rem;list-style:none;padding:0;margin:.5rem 0}.rotation-round{display:grid;gap:.25rem;align-content:start;background:#f5f8f9;border:1px solid #dce6e9;border-radius:.45rem;padding:.55rem;min-height:5.9rem}.round-label{font-size:.75rem;font-weight:700;color:#53616a}.rotation-badge{width:max-content;border-radius:1rem;padding:.12rem .45rem;font-size:.75rem;letter-spacing:.04em}.play .rotation-badge{color:#0c613a;background:#e6f4eb}.sit .rotation-badge{color:#53616a;background:#e8edef}.opponent{font-size:.88rem;overflow-wrap:anywhere}.rotation-summary{margin:.65rem 0 0;font-weight:650;color:#33434c}.pool-scale{word-spacing:1.1rem;font-weight:700;letter-spacing:.08em;color:#53616a;padding:.6rem 0}</style>'
     content = badge_css + (_home_view(state, history) if view == "home" else _history_view(state, history) if view == "history" else _teams_view(history, season) if view == "teams" else _settings_view(settings))
     notices = f'<p class="notice">{_esc(message)}</p>' if message else ''
     notices += f'<p class="notice error">{_esc(error)}</p>' if error else ''
