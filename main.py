@@ -1,13 +1,26 @@
 """One-shot, resumable volleyball schedule monitor."""
 from __future__ import annotations
-import logging, sys, time
+import logging, re, sys, time
 from pdfminer.high_level import extract_text as _extract_pdf_text
 from src.env import load_env
+
+_PUBLISHER_NOTICE = re.compile(
+    r"(?:schedule\s+(?:will\s+be|to\s+be)\s+posted|schedule\s+coming(?:\s+soon)?)",
+    re.IGNORECASE,
+)
 
 def _pdf_text(path):
     # pdfminer separates pages with a form feed; the former page-by-page
     # extractor joined pages with newlines.
     return _extract_pdf_text(str(path)).replace("\f", "\n")
+
+def _publisher_notice(text):
+    """Return the readable line containing an obvious schedule-publisher notice."""
+    for line in (line.strip() for line in text.splitlines()):
+        if _PUBLISHER_NOTICE.search(line):
+            return line
+    match = _PUBLISHER_NOTICE.search(text)
+    return text[max(0, text.rfind("\n", 0, match.start()) + 1):text.find("\n", match.end()) if "\n" in text[match.end():] else len(text)].strip() if match else None
 
 def run(fetcher=None, parser_class=None, calendar_factory=None, mailer_factory=None, state=None, history_factory=None):
     from config import HISTORY_FILE, KEYWORD, PAGE_URL, PDF_DIR, STATE_FILE
@@ -56,12 +69,13 @@ def run(fetcher=None, parser_class=None, calendar_factory=None, mailer_factory=N
                 logger.info("No published schedule PDF found.")
                 state.schedule_discovery_failed(RuntimeError("website reachable but no schedule link was discovered"))
                 return False
-            schedule_matches = []
+            schedule_matches, readable_candidates = [], []
             wanted_text = normalize_text(settings["schedule_match_text"])
             for url in urls:
                 try:
                     downloaded = fetcher.download(url)
                     pdf_text = _pdf_text(downloaded.path)
+                    readable_candidates.append((downloaded, pdf_text))
                 except Exception as exc:
                     logger.warning("Rejected schedule candidate %s: %s", url, exc)
                     continue
@@ -70,6 +84,23 @@ def run(fetcher=None, parser_class=None, calendar_factory=None, mailer_factory=N
                 else:
                     logger.info("Valid schedule candidate does not match schedule text %r: %s", settings["schedule_match_text"], downloaded.url)
             if not schedule_matches:
+                notices = [(item, _publisher_notice(text)) for item, text in readable_candidates]
+                notices = [(item, notice) for item, notice in notices if notice]
+                if len(notices) == 1:
+                    downloaded, notice = notices[0]
+                    state.schedule_unavailable("waiting_for_schedule", downloaded.url, notice)
+                    logger.info("current schedule document is waiting for game data: %s", downloaded.url)
+                    return True
+                if len(readable_candidates) == 1:
+                    downloaded, pdf_text = readable_candidates[0]
+                    try:
+                        parsed_events = parse_schedule(pdf_text)
+                    except Exception as exc:
+                        state.set_failure("parse", exc); logger.exception("parsing failed"); return False
+                    if not parsed_events:
+                        state.schedule_unavailable("no_games_available", downloaded.url)
+                        logger.info("readable schedule document contains no playable games")
+                        return True
                 logger.info("No published schedule PDF matched schedule text %r.", settings["schedule_match_text"])
                 state.schedule_discovery_failed(RuntimeError("website reachable but no current schedule document matched the configured league"))
                 return False
@@ -85,12 +116,18 @@ def run(fetcher=None, parser_class=None, calendar_factory=None, mailer_factory=N
                     state.set_failure("parse", exc); logger.exception("parsing failed"); return False
                 secondary = [(item, events) for item, events in secondary if events]
                 if len(secondary) != 1:
+                    if not secondary:
+                        downloaded, pdf_text = schedule_matches[0]
+                        state.schedule_unavailable("waiting_for_schedule" if _publisher_notice(pdf_text) else "no_games_available", downloaded.url, _publisher_notice(pdf_text))
+                        logger.info("current schedule document contains no playable games")
+                        return True
                     logger.error("%d PDFs match schedule text %r; team aliases did not identify exactly one candidate", len(schedule_matches), settings["schedule_match_text"])
                     state.schedule_discovery_failed(RuntimeError("multiple current schedule documents matched; unable to select one"))
                     return False
                 (downloaded, pdf_text), parsed_events = secondary[0]
                 logger.warning("Multiple PDFs match schedule text; selected %s using team aliases", downloaded.url)
             if parsed_events is not None and not parsed_events:
+                state.schedule_unavailable("waiting_for_schedule" if _publisher_notice(pdf_text) else "no_games_available", downloaded.url, _publisher_notice(pdf_text))
                 logger.info("Configured team not found in selected schedule PDF: %s", downloaded.url)
                 return True
             if state.data.get("completed", {}).get("hash") == downloaded.digest:
@@ -103,7 +140,12 @@ def run(fetcher=None, parser_class=None, calendar_factory=None, mailer_factory=N
             try:
                 parsed_events = parsed_events if parsed_events is not None else parse_schedule(_pdf_text(path))
                 if not parsed_events:
-                    raise ValueError("configured team not found in schedule candidate")
+                    text = _pdf_text(path)
+                    notice = _publisher_notice(text)
+                    state.discard_candidate()
+                    state.schedule_unavailable("waiting_for_schedule" if notice else "no_games_available", candidate.get("source_url"), notice)
+                    logger.info("current schedule candidate contains no playable games")
+                    return True
                 state.mark_stage("parsed"); candidate = state.data["candidate"]
                 history_write("record_events", candidate["hash"], parsed_events, state.data["last_successful_parsed"])
                 logger.info("parsing succeeded; events=%d", len(parsed_events))

@@ -43,6 +43,26 @@ class ScheduleState:
     def schedule_document_found(self):
         """Record that a current, configured-league document was downloaded."""
         self.data["last_schedule_document_found"] = now()
+        self.data["last_successful_check"] = now()
+        self.data["schedule_availability"] = {"status": "available", "observed_at": now()}
+        self.data.pop("last_schedule_discovery_failure", None)
+        self._clear_failure("schedule/discovery")
+        self.save()
+    def schedule_unavailable(self, status, source_url, publisher_message=None):
+        """Persist a readable, current document with no playable games.
+
+        This is an availability observation, not a schedule revision: callers
+        must not create a candidate or reconcile calendar/email for it.
+        """
+        if status not in {"waiting_for_schedule", "no_games_available"}:
+            raise ValueError("invalid schedule availability status")
+        observed_at = now()
+        self.data["last_schedule_document_found"] = observed_at
+        self.data["last_successful_check"] = observed_at
+        self.data["schedule_availability"] = {
+            "status": status, "source_url": source_url, "observed_at": observed_at,
+            **({"publisher_message": publisher_message} if publisher_message else {}),
+        }
         self.data.pop("last_schedule_discovery_failure", None)
         self._clear_failure("schedule/discovery")
         self.save()
@@ -60,6 +80,10 @@ class ScheduleState:
             candidate = {"hash":digest,"pdf_path":str(pdf_path),"source_url":source_url,"detected_at":now(),"parsed":False,"calendar":False,"email":False}
             self.data["candidate"] = candidate; self.save()
         return candidate
+    def discard_candidate(self):
+        """Forget a non-schedule candidate before it becomes a revision."""
+        if self.data.pop("candidate", None) is not None:
+            self.save()
     def mark_stage(self, stage, value=True):
         self.data["candidate"][stage] = value
         self.data[f"last_successful_{stage}"] = now()
@@ -69,5 +93,5 @@ class ScheduleState:
         candidate = self.data.get("candidate", {})
         if all(candidate.get(stage) for stage in ("parsed", "calendar", "email")):
             self.data["completed"] = {"hash":candidate["hash"],"source_url":candidate["source_url"],"at":now()}
-            self.data["last_successfully_completed_run"] = now(); self.data.pop("last_failure", None); self.save(); return True
+            self.data["last_successfully_completed_run"] = now(); self.data["last_successful_check"] = now(); self.data.pop("last_failure", None); self.save(); return True
         return False

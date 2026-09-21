@@ -80,24 +80,26 @@ def test_reachable_website_with_no_schedule_link_records_discovery_failure(monke
     assert state.data["last_attempted_run"]
 
 
-def test_website_failure_clears_during_candidate_processing(monkeypatch, tmp_path):
+def test_website_failure_recovers_to_healthy_no_games_state(monkeypatch, tmp_path):
     document = selected_document(tmp_path)
     fetcher, state = setup(monkeypatch, tmp_path, {document.url: document})
     failure(state, "website/download")
-    assert not main.run(fetcher=fetcher, parser_class=parser(events=False), state=state)
+    assert main.run(fetcher=fetcher, parser_class=parser(events=False), state=state)
     assert fetcher.downloads == [document.url]
-    assert state.data["last_failure"]["stage"] == "parse"
+    assert "last_failure" not in state.data
+    assert state.data["schedule_availability"]["status"] == "no_games_available"
     assert state.data["last_schedule_document_found"]
 
 
-def test_website_failure_clears_during_nonmatching_candidate_processing(monkeypatch, tmp_path):
+def test_website_failure_recovers_when_the_only_readable_document_has_no_games(monkeypatch, tmp_path):
     document = selected_document(tmp_path)
     fetcher, state = setup(monkeypatch, tmp_path, {document.url: document})
     monkeypatch.setattr(main, "_pdf_text", lambda _path: "Monday Team")
     failure(state, "website/download")
-    assert not main.run(fetcher=fetcher, state=state)
+    assert main.run(fetcher=fetcher, state=state)
     assert fetcher.downloads == [document.url]
-    assert state.data["last_failure"]["stage"] == "schedule/discovery"
+    assert "last_failure" not in state.data
+    assert state.data["schedule_availability"]["status"] == "no_games_available"
 
 
 def test_new_website_failure_replaces_previous_failure(monkeypatch, tmp_path):
