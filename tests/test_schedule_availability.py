@@ -42,11 +42,44 @@ def test_placeholder_is_healthy_and_keeps_publisher_message(monkeypatch, tmp_pat
     assert "last_failure" not in state.data and not calendar.calls and not mailer.calls
 
 
+def test_waiting_for_schedule_advances_check_but_not_completed_update(monkeypatch, tmp_path):
+    result, state, _calendar, _mailer = _run(monkeypatch, tmp_path, "Wednesday Team", [{"uid": "event"}])
+    assert result
+    previous_completion = "2026-09-16T14:22:00+00:00"
+    state.data["last_successfully_completed_run"] = previous_completion
+    state.save()
+    document = DownloadedPDF("https://example/pending.pdf", Path("pending.pdf"), "new-pending-hash")
+    monkeypatch.setattr(main, "_pdf_text", lambda _path: "Schedule will be posted soon.")
+    parser = lambda _text: type("Parser", (), {"parse": lambda self: []})()
+    assert main.run(fetcher=Fetcher(document), parser_class=parser, state=state)
+    assert state.data["last_successful_check"] != previous_completion
+    assert state.data["last_successfully_completed_run"] == previous_completion
+
+
+def test_no_games_advances_check_but_not_completed_update(monkeypatch, tmp_path):
+    result, state, _calendar, _mailer = _run(monkeypatch, tmp_path, "Wednesday Team", [{"uid": "event"}])
+    assert result
+    previous_completion = "2026-09-16T14:22:00+00:00"
+    state.data["last_successfully_completed_run"] = previous_completion
+    state.save()
+    document = DownloadedPDF("https://example/pending.pdf", Path("pending.pdf"), "new-pending-hash")
+    monkeypatch.setattr(main, "_pdf_text", lambda _path: "Wednesday document")
+    parser = lambda _text: type("Parser", (), {"parse": lambda self: []})()
+    assert main.run(fetcher=Fetcher(document), parser_class=parser, state=state)
+    assert state.data["last_successful_check"] != previous_completion
+    assert state.data["last_successfully_completed_run"] == previous_completion
+
+
 def test_playable_schedule_remains_an_available_completed_schedule(monkeypatch, tmp_path):
     result, state, calendar, mailer = _run(monkeypatch, tmp_path, "Wednesday Team", [{"uid": "event"}])
     assert result and state.data["schedule_availability"]["status"] == "available"
     assert state.data["completed"]["hash"] == "pending-hash"
     assert calendar.calls == mailer.calls == 1
+
+
+def test_playable_schedule_advances_completed_update(monkeypatch, tmp_path):
+    result, state, _calendar, _mailer = _run(monkeypatch, tmp_path, "Wednesday Team", [{"uid": "event"}])
+    assert result and state.data["last_successfully_completed_run"]
 
 
 def test_readable_zero_game_schedule_is_healthy_without_notice(monkeypatch, tmp_path):

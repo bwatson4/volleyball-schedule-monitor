@@ -107,10 +107,19 @@ def test_home_keeps_latest_weekly_assignment_visible_after_it_is_no_longer_futur
     page = _home_view({}, history)
 
     assert data["next"] is None and data["latest_assignment"] == game
-    assert "This Week’s Game" in page and "Latest Weekly Schedule" in page
+    assert "Latest Game" in page and "Latest Weekly Schedule" in page
     assert "Wednesday, Sep 16" in page and page.count("8:30 PM–10:00 PM") == 2
     assert "KCS" in page and "D POOL" in page and "Position <b>3</b>" in page
     assert "No future game" not in page and "20:30" not in page
+
+
+def test_home_game_card_title_uses_the_displayed_game_date():
+    from ui import _home_view
+    game = {"game_date": "2026-09-16", "start_time": "2026-09-16T20:30:00", "end_time": "2026-09-16T22:00:00"}
+    history = {"current_games": [game], "analytics_games": [game], "revisions": []}
+    assert "This Week’s Game" in _home_view({}, history, datetime(2026, 9, 16, 23))
+    assert "This Week’s Game" in _home_view({}, history, datetime(2026, 9, 15, 12))
+    assert "Latest Game" in _home_view({}, history, datetime(2026, 9, 17, 0))
 
 
 def test_pool_movement_chart_shows_all_pool_bands_without_help_prose():

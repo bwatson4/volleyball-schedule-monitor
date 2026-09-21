@@ -92,6 +92,17 @@ class ScheduleState:
     def complete_if_ready(self):
         candidate = self.data.get("candidate", {})
         if all(candidate.get(stage) for stage in ("parsed", "calendar", "email")):
-            self.data["completed"] = {"hash":candidate["hash"],"source_url":candidate["source_url"],"at":now()}
-            self.data["last_successfully_completed_run"] = now(); self.data["last_successful_check"] = now(); self.data.pop("last_failure", None); self.save(); return True
+            # ``run`` calls this at startup to decide whether a durable
+            # candidate needs resuming.  A completed candidate remains in
+            # state for that check, so it must be idempotent: do not turn a
+            # later healthy availability scan into a new schedule update.
+            completed = self.data.get("completed", {})
+            if completed.get("hash") != candidate.get("hash"):
+                completed_at = now()
+                self.data["completed"] = {"hash":candidate["hash"],"source_url":candidate["source_url"],"at":completed_at}
+                self.data["last_successfully_completed_run"] = completed_at
+                self.data["last_successful_check"] = completed_at
+                self.data.pop("last_failure", None)
+                self.save()
+            return True
         return False

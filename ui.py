@@ -90,6 +90,7 @@ def _dashboard_model(history, current_time=None):
     return {"current_games": current_games, "current_upcoming": current_upcoming,
             "next": current_upcoming[0] if current_upcoming else None,
             "latest_assignment": current_games[-1] if current_games else None,
+            "current_time": current_time,
             "analytics_games": analytics_games,
             "current_season": current_season,
             "gyms": Counter(game.get("gym") or "Unknown" for game in analytics_games),
@@ -206,15 +207,16 @@ def _your_rotation(game):
         for item in rounds)
     return f'<section class="rotation"><h3>Your Rotation</h3><ol class="rotation-list">{items}</ol><p class="rotation-summary">{_esc(_rotation_summary(rounds))}</p></section>'
 
-def _home_view(state, history):
-    data = _dashboard_model(history); current = data["latest_assignment"]
+def _home_view(state, history, current_time=None):
+    data = _dashboard_model(history, current_time); current = data["latest_assignment"]
     latest = data["revisions"][0] if data["revisions"] else {}
     if current:
         game_content = f'<p class="date">{_esc(_game_date(current.get("game_date")))}</p><p class="next-time">{_esc(_time_range(current))}</p><p class="venue">{_esc(current.get("gym"))}</p><p>Pool <b>{_esc(current.get("pool"))}</b> · Position <b>{_esc(current.get("pool_position"))}</b></p>{_your_rotation(current)}'
     else: game_content = '<p class="muted">No assignment is in the latest parsed schedule.</p>'
     status = f'<dl><dt>Current pool</dt><dd>{_esc(current.get("pool")) if current else "—"}</dd><dt>Current position</dt><dd>{_esc(current.get("pool_position")) if current else "—"}</dd><dt>Latest revision</dt><dd>{_esc(_fmt(latest.get("detected_at")))}</dd><dt>Calendar synced</dt><dd>{_esc(_fmt(latest.get("calendar_at")))}</dd><dt>Email sent</dt><dd>{_esc(_fmt(latest.get("email_at")))}</dd></dl>'
     most_common_time = _time(data["times"].most_common(1)[0][0]) if data["times"] else "—"
-    return f'''<div class="home-lead"><section class="card next-card"><h2>This Week’s Game</h2>{game_content}</section><section class="card status-card"><h2>Current Status</h2>{status}</section></div>{_teams_this_week(current)}<section class="card"><h2>Latest Weekly Schedule</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Gym</th><th>Pool</th><th>Position</th></tr></thead><tbody>{_schedule_rows(data["current_games"])}</tbody></table></div></section><div class="analytics-grid">{_bar_summary("Gym Breakdown", data["gyms"])}{_bar_summary("Time Slot Breakdown", data["times"], _time)}{_bar_summary("Pool Appearances", data["pools"])}<section class="card"><h3>Schedule Analytics</h3><p><b>Most common start:</b> {_esc(most_common_time)}</p></section></div><section class="card movement-card"><h2>Pool Movement</h2>{_pool_chart(data["pool_observations"])}</section>'''
+    title = "Latest Game" if current and _event_time(current).date() < data["current_time"].date() else "This Week’s Game"
+    return f'''<div class="home-lead"><section class="card next-card"><h2>{title}</h2>{game_content}</section><section class="card status-card"><h2>Current Status</h2>{status}</section></div>{_teams_this_week(current)}<section class="card"><h2>Latest Weekly Schedule</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Gym</th><th>Pool</th><th>Position</th></tr></thead><tbody>{_schedule_rows(data["current_games"])}</tbody></table></div></section><div class="analytics-grid">{_bar_summary("Gym Breakdown", data["gyms"])}{_bar_summary("Time Slot Breakdown", data["times"], _time)}{_bar_summary("Pool Appearances", data["pools"])}<section class="card"><h3>Schedule Analytics</h3><p><b>Most common start:</b> {_esc(most_common_time)}</p></section></div><section class="card movement-card"><h2>Pool Movement</h2>{_pool_chart(data["pool_observations"])}</section>'''
 
 def _history_view(state, history):
     revisions, failure = history.get("revisions", []), state.get("last_failure")
