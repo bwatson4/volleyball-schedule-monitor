@@ -28,14 +28,15 @@ def _ui_settings():
 def _empty_history():
     return {"revisions": [], "games": [], "current_games": [], "analytics_games": [], "pool_observations": [],
             "team_history": [], "team_history_by_season": {}, "seasons": [],
-            "current_season": season_for_date(datetime.now(timezone.utc).date())}
+            "current_season": season_for_date(datetime.now(timezone.utc).date()),
+            "pool_movement": {"status": "unavailable", "movements": [], "validation": {"valid": True, "warnings": [], "errors": []}}}
 
 def _history():
     try:
         from config import HISTORY_FILE
         if not HISTORY_FILE.exists(): return _empty_history()
         from src.history import HistoryStore
-        return HistoryStore(HISTORY_FILE).dashboard()
+        return HistoryStore(HISTORY_FILE).dashboard(_ui_settings().get("team_names"))
     except Exception:
         return _empty_history()
 
@@ -149,6 +150,34 @@ def _teams_this_week(game):
         for team in teams)
     return f'<section class="card teams-card"><h2>Teams in Your Pool</h2><ul class="team-list">{rows}</ul></section>'
 
+def _pool_movement_rows(movement):
+    status, rows = movement.get("status"), movement.get("movements", [])
+    if status == "unavailable":
+        return ""
+    if status == "season_start":
+        return '<section class="card pool-movement-current"><h2>Pool Movement</h2><p class="muted">First week of season — no prior pool movement yet.</p></section>'
+    def row(item):
+        direction = item.get("direction")
+        symbol = {"up": "↑", "down": "↓", "same": "—"}.get(direction, "?")
+        if direction in {"up", "down"}:
+            detail = f'{direction.title()} from {item.get("previous_pool")} to {item.get("current_pool")}'
+        elif direction == "same": detail = f'Stayed in {item.get("current_pool")}'
+        else: detail = "Previous pool unavailable"
+        own = '<span class="your-team">YOUR TEAM</span>' if item.get("is_user_team") else ""
+        return f'<li class="movement-row {"own" if item.get("is_user_team") else ""}"><b class="movement-symbol">{symbol}</b><span><b>{_esc(item.get("canonical_name"))}</b><small>{_esc(detail)}</small></span>{own}</li>'
+    user = next((item for item in rows if item.get("is_user_team")), None)
+    user_callout = ""
+    if user:
+        symbol = {"up": "↑", "down": "↓", "same": "—"}.get(user.get("direction"), "?")
+        if user.get("direction") in {"up", "down"}:
+            text = f'{user.get("direction").title()} from {user.get("previous_pool")} to {user.get("current_pool")}'
+        elif user.get("direction") == "same": text = f'Stayed in {user.get("current_pool")}'
+        else: text = "Previous pool unavailable"
+        user_callout = f'<p class="your-movement"><b>Your team · {_esc(user.get("canonical_name"))}</b><br>{symbol} {_esc(text)}</p>'
+    validation = movement.get("validation", {})
+    note = '<p class="movement-warning">Movement data needs attention; details are retained for diagnosis.</p>' if not validation.get("valid", True) else ""
+    return f'<section class="card pool-movement-current"><h2>Pool { _esc(movement.get("pool")) } Movement</h2>{user_callout}<ul class="movement-list">{"".join(row(item) for item in rows)}</ul>{note}</section>'
+
 def _rotation_rounds(game):
     """Resolve the configured position against an optional stored play matrix."""
     if not game or not game.get("rotation_matrix"):
@@ -216,7 +245,7 @@ def _home_view(state, history, current_time=None):
     status = f'<dl><dt>Current pool</dt><dd>{_esc(current.get("pool")) if current else "—"}</dd><dt>Current position</dt><dd>{_esc(current.get("pool_position")) if current else "—"}</dd><dt>Latest revision</dt><dd>{_esc(_fmt(latest.get("detected_at")))}</dd><dt>Calendar synced</dt><dd>{_esc(_fmt(latest.get("calendar_at")))}</dd><dt>Email sent</dt><dd>{_esc(_fmt(latest.get("email_at")))}</dd></dl>'
     most_common_time = _time(data["times"].most_common(1)[0][0]) if data["times"] else "—"
     title = "Latest Game" if current and _event_time(current).date() < data["current_time"].date() else "This Week’s Game"
-    return f'''<div class="home-lead"><section class="card next-card"><h2>{title}</h2>{game_content}</section><section class="card status-card"><h2>Current Status</h2>{status}</section></div>{_teams_this_week(current)}<section class="card"><h2>Latest Weekly Schedule</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Gym</th><th>Pool</th><th>Position</th></tr></thead><tbody>{_schedule_rows(data["current_games"])}</tbody></table></div></section><div class="analytics-grid">{_bar_summary("Gym Breakdown", data["gyms"])}{_bar_summary("Time Slot Breakdown", data["times"], _time)}{_bar_summary("Pool Appearances", data["pools"])}<section class="card"><h3>Schedule Analytics</h3><p><b>Most common start:</b> {_esc(most_common_time)}</p></section></div><section class="card movement-card"><h2>Pool Movement</h2>{_pool_chart(data["pool_observations"])}</section>'''
+    return f'''<div class="home-lead"><section class="card next-card"><h2>{title}</h2>{game_content}</section><section class="card status-card"><h2>Current Status</h2>{status}</section></div>{_pool_movement_rows(history.get("pool_movement", {}))}{_teams_this_week(current)}<section class="card"><h2>Latest Weekly Schedule</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Gym</th><th>Pool</th><th>Position</th></tr></thead><tbody>{_schedule_rows(data["current_games"])}</tbody></table></div></section><div class="analytics-grid">{_bar_summary("Gym Breakdown", data["gyms"])}{_bar_summary("Time Slot Breakdown", data["times"], _time)}{_bar_summary("Pool Appearances", data["pools"])}<section class="card"><h3>Schedule Analytics</h3><p><b>Most common start:</b> {_esc(most_common_time)}</p></section></div><section class="card movement-card"><h2>Pool Movement History</h2>{_pool_chart(data["pool_observations"])}</section>'''
 
 def _history_view(state, history):
     revisions, failure = history.get("revisions", []), state.get("last_failure")
@@ -282,7 +311,7 @@ def _page(view="home", season=None, message="", error=""):
     else:
         health, status_class = "Schedule available", "healthy"
     navigation = "".join(f'<a href="/?view={name}" class="{"active" if view == name else ""}" {"aria-current=\"page\"" if view == name else ""}>{name.title()}</a>' for name in ("home", "history", "teams", "settings"))
-    badge_css = '<style>.team-list{list-style:none;padding:0;margin:0}.team-list li{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;padding:.55rem 0;border-top:1px solid #e1e8eb}.team-list small{color:#5a6871}.team-badge{border:1px solid currentColor;border-radius:1rem;padding:.12rem .45rem;font-size:.8rem;font-weight:700}.team-badge.new{color:#12633d;background:#e6f4eb}.team-badge.same{color:#075b93;background:#e3f0f6}.team-badge.returning{color:#825500;background:#fff4d6}.next-card{border-top:4px solid #0875b8}.rotation{margin-top:1.15rem;padding-top:.9rem;border-top:1px solid #e1e8eb}.rotation h3{text-transform:uppercase;letter-spacing:.08em;color:#53616a;font-size:.78rem}.rotation-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr));gap:.55rem;list-style:none;padding:0;margin:.5rem 0}.rotation-round{display:grid;gap:.25rem;align-content:start;background:#f5f8f9;border:1px solid #dce6e9;border-radius:.45rem;padding:.55rem;min-height:5.9rem}.round-label{font-size:.75rem;font-weight:700;color:#53616a}.rotation-badge{width:max-content;border-radius:1rem;padding:.12rem .45rem;font-size:.75rem;letter-spacing:.04em}.play .rotation-badge{color:#0c613a;background:#e6f4eb}.sit .rotation-badge{color:#53616a;background:#e8edef}.opponent{font-size:.88rem;overflow-wrap:anywhere}.rotation-summary{margin:.65rem 0 0;font-weight:650;color:#33434c}.pool-scale{word-spacing:1.1rem;font-weight:700;letter-spacing:.08em;color:#53616a;padding:.6rem 0}</style>'
+    badge_css = '<style>.team-list,.movement-list{list-style:none;padding:0;margin:0}.team-list li{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;padding:.55rem 0;border-top:1px solid #e1e8eb}.team-list small,.movement-row small{color:#5a6871}.team-badge{border:1px solid currentColor;border-radius:1rem;padding:.12rem .45rem;font-size:.8rem;font-weight:700}.team-badge.new{color:#12633d;background:#e6f4eb}.team-badge.same{color:#075b93;background:#e3f0f6}.team-badge.returning{color:#825500;background:#fff4d6}.next-card{border-top:4px solid #0875b8}.pool-movement-current{border-top:4px solid #0875b8}.movement-row{display:grid;grid-template-columns:1.5rem minmax(0,1fr) auto;gap:.45rem;align-items:center;padding:.48rem 0;border-top:1px solid #e1e8eb}.movement-row span:not(.your-team){display:grid;gap:.12rem}.movement-symbol{font-size:1.2rem;text-align:center}.movement-row.own,.your-movement{background:#eef7fc}.movement-row.own{margin:0 -.35rem;padding-left:.35rem;padding-right:.35rem;border-radius:.35rem}.your-movement{padding:.6rem;border-radius:.4rem;margin:.2rem 0 .65rem}.your-team{font-size:.7rem;font-weight:800;color:#075b93;white-space:nowrap}.movement-warning{font-size:.85rem;color:#825500;margin:.65rem 0 0}.rotation{margin-top:1.15rem;padding-top:.9rem;border-top:1px solid #e1e8eb}.rotation h3{text-transform:uppercase;letter-spacing:.08em;color:#53616a;font-size:.78rem}.rotation-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr));gap:.55rem;list-style:none;padding:0;margin:.5rem 0}.rotation-round{display:grid;gap:.25rem;align-content:start;background:#f5f8f9;border:1px solid #dce6e9;border-radius:.45rem;padding:.55rem;min-height:5.9rem}.round-label{font-size:.75rem;font-weight:700;color:#53616a}.rotation-badge{width:max-content;border-radius:1rem;padding:.12rem .45rem;font-size:.75rem;letter-spacing:.04em}.play .rotation-badge{color:#0c613a;background:#e6f4eb}.sit .rotation-badge{color:#53616a;background:#e8edef}.opponent{font-size:.88rem;overflow-wrap:anywhere}.rotation-summary{margin:.65rem 0 0;font-weight:650;color:#33434c}.pool-scale{word-spacing:1.1rem;font-weight:700;letter-spacing:.08em;color:#53616a;padding:.6rem 0}</style>'
     content = badge_css + _availability_notice(availability) + (_home_view(state, history) if view == "home" else _history_view(state, history) if view == "history" else _teams_view(history, season) if view == "teams" else _settings_view(settings))
     notices = f'<p class="notice">{_esc(message)}</p>' if message else ''
     notices += f'<p class="notice error">{_esc(error)}</p>' if error else ''

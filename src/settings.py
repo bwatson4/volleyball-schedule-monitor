@@ -3,15 +3,13 @@ from __future__ import annotations
 import json, os, re
 from pathlib import Path
 from utils import atomic_json_write
+from src.team_identity import normalize_team
 
 EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 def settings_path() -> Path:
     explicit = os.environ.get("SETTINGS_FILE")
     return Path(explicit) if explicit else Path(os.environ.get("RUNTIME_DIR", str(Path(__file__).resolve().parents[1] / "runtime"))) / "settings.json"
-
-def normalize_team(value: str) -> str:
-    return re.sub(r"\s+", " ", str(value or "")).strip().casefold()
 
 normalize_text = normalize_team
 

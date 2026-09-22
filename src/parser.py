@@ -1,9 +1,18 @@
-from config import POOLS, TIME_FORMAT
 import logging
+import os
 import re
 from datetime import datetime
 
+try:
+    from config import POOLS, TIME_FORMAT
+except RuntimeError:
+    # History-only tools must be able to reparse a retained PDF without loading
+    # calendar/mail credentials. The schedule runner still imports config first.
+    POOLS = [f"{letter} POOL" for letter in "ABCDEFGH"]
+    TIME_FORMAT = os.environ.get("TIME_FORMAT", "12 Hour")
+
 from src.season import season_for_date
+from src.team_identity import normalize_team
 
 
 LOG = logging.getLogger("schedule_monitor.parser")
@@ -14,6 +23,7 @@ class ScheduleParser:
         self.text = text
         self.lines = self._normalize_lines(text)
         self.events = []
+        self.league_pools = {}
 
         self.team_names = [] if team_names is None else (team_names if isinstance(team_names, list) else [team_names])
         self.team_names_norm = [self._norm_team(n) for n in self.team_names if str(n).strip()]
@@ -36,10 +46,7 @@ class ScheduleParser:
     
     @staticmethod
     def _norm_team(s: str) -> str:
-        # lower, collapse whitespace, remove common punctuation variance
-        s = s.lower()
-        s = re.sub(r"\s+", " ", s).strip()
-        return s
+        return normalize_team(s)
     
     def _matched_alias(self, name: str) -> str | None:
         n = self._norm_team(name)
@@ -186,6 +193,11 @@ class ScheduleParser:
                            "position": int(team["num"])})
         return result
 
+    def _record_pool_roster(self, pool, teams):
+        """Keep the complete weekly roster for history, including our team."""
+        if pool:
+            self.league_pools[pool] = [{"name": team["name"], "normalized_name": self._norm_team(team["name"]), "position": int(team["num"])} for team in teams if self._norm_team(team.get("name", ""))]
+
     def _append_matching_events(self, teams, gym, pool, start_raw, end_raw):
         """Append configured-team events for one already reconstructed session."""
         if not (start_raw and end_raw and self.current_date):
@@ -319,6 +331,7 @@ class ScheduleParser:
         if not self.current_date:
             return
         for gym, pool, teams, start_raw, end_raw in self._flattened_blocks():
+            self._record_pool_roster(pool, teams)
             self._append_matching_events(teams, gym, pool, start_raw, end_raw)
 
     @staticmethod
@@ -353,6 +366,7 @@ class ScheduleParser:
                 start_raw, end_raw = self.extract_time(block)
                 teams = self.extract_teams(block)
                 self.diagnostics["teams_extracted"] += len(teams)
+                self._record_pool_roster(pool_for_block, teams)
                 self._append_matching_events(teams, gym_for_block, pool_for_block, start_raw, end_raw)
 
                 i = next_i
@@ -362,6 +376,9 @@ class ScheduleParser:
 
         if not self.events:
             self._parse_flattened_layout()
+        roster = [{"pool": pool, "teams": teams} for pool, teams in self.league_pools.items()]
+        for event in self.events:
+            event["league_pools"] = roster
         LOG.info("parser diagnostics date=%s pools=%d flattened_blocks=%d teams=%d aliases=%s matched=%s rotation_rounds=%d events=%d",
                  self.diagnostics["date"], self.diagnostics["pool_headings"], self.diagnostics["flattened_blocks"],
                  self.diagnostics["teams_extracted"], self.team_names, self.diagnostics["alias_matched"],

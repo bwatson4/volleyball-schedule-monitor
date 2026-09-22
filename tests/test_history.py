@@ -118,7 +118,7 @@ def test_team_history_classifies_new_same_and_returning_and_preserves_display_na
     assert alpha["classification"] == "SAME AS LAST WEEK" and alpha["encounter_number"] == 2 and alpha["last_together"] == "2026-09-02"
     bravo = next(item for item in third["pool_teams"] if item["team_normalized"] == "team bravo")
     assert bravo["classification"] == "RETURNING" and bravo["encounter_number"] == 2 and bravo["last_together"] == "2026-09-02"
-    alpha_history = next(row for row in store.dashboard()["team_history"] if row["team"] == " team   alpha ")
+    alpha_history = next(row for row in store.dashboard()["team_history"] if row["team"] == "Team Alpha")
     assert alpha_history["weeks_together"] == 2 and alpha_history["first_seen"] == "2026-09-02"
 
 
@@ -131,7 +131,7 @@ def test_three_revisions_with_changed_details_count_as_one_team_encounter(tmp_pa
     data = store.dashboard()
     assert len(data["analytics_games"]) == 2
     record = data["team_history"][0]
-    assert record["team"] == "TEAM   ALPHA" and record["weeks_together"] == 2
+    assert record["team"] == "Team Alpha" and record["weeks_together"] == 2
     assert record["first_seen"] == "2026-09-02" and record["last_together"] == "2026-09-09"
     assert data["analytics_games"][-1]["pool_teams"][0]["encounter_number"] == 2
 
@@ -145,9 +145,9 @@ def test_latest_revision_replaces_obsolete_team_membership_for_a_week(tmp_path):
     record_revision(store, "following", "2026-08-03T00:00:00+00:00",
                     associated_game("week-two", "2026-09-09", ["TEAM CHARLIE"]))
     data = store.dashboard()
-    assert [team["display_name"] for team in data["current_games"][0]["pool_teams"]] == ["TEAM CHARLIE"]
+    assert [team["display_name"] for team in data["current_games"][0]["pool_teams"]] == ["Team Charlie"]
     record = data["team_history"][0]
-    assert record["team"] == "TEAM CHARLIE" and record["weeks_together"] == 2
+    assert record["team"] == "Team Charlie" and record["weeks_together"] == 2
     assert record["first_seen"] == "2026-09-02" and record["last_together"] == "2026-09-09"
     current_team = data["analytics_games"][-1]["pool_teams"][0]
     assert current_team["classification"] == "SAME AS LAST WEEK"
