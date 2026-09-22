@@ -63,7 +63,7 @@ def test_no_games_advances_check_but_not_completed_update(monkeypatch, tmp_path)
     state.data["last_successfully_completed_run"] = previous_completion
     state.save()
     document = DownloadedPDF("https://example/pending.pdf", Path("pending.pdf"), "new-pending-hash")
-    monkeypatch.setattr(main, "_pdf_text", lambda _path: "Wednesday document")
+    monkeypatch.setattr(main, "_pdf_text", lambda _path: "Wednesday: no games are scheduled this week")
     parser = lambda _text: type("Parser", (), {"parse": lambda self: []})()
     assert main.run(fetcher=Fetcher(document), parser_class=parser, state=state)
     assert state.data["last_successful_check"] != previous_completion
@@ -82,11 +82,41 @@ def test_playable_schedule_advances_completed_update(monkeypatch, tmp_path):
     assert result and state.data["last_successfully_completed_run"]
 
 
-def test_readable_zero_game_schedule_is_healthy_without_notice(monkeypatch, tmp_path):
-    result, state, calendar, mailer = _run(monkeypatch, tmp_path, "Wednesday league document", [])
+def test_explicit_no_games_document_is_healthy(monkeypatch, tmp_path):
+    result, state, calendar, mailer = _run(monkeypatch, tmp_path, "Wednesday: no games are scheduled this week", [])
     assert result and state.data["schedule_availability"]["status"] == "no_games_available"
-    assert "publisher_message" not in state.data["schedule_availability"]
+    assert "no games" in state.data["schedule_availability"]["publisher_message"]
     assert not calendar.calls and not mailer.calls and "candidate" not in state.data
+
+
+def test_structured_zero_event_document_is_retained_as_a_parse_failure(monkeypatch, tmp_path):
+    result, state, calendar, mailer = _run(monkeypatch, tmp_path,
+        "Wednesday\nSeptember 23, 2026\nGym\nA POOL\n1 Another Team 7:00-8:30", [])
+    assert not result and state.data["last_failure"]["stage"] == "parse"
+    assert state.data["candidate"]["hash"] == "pending-hash" and state.data["candidate"]["unparsed"]
+    assert state.data["schedule_availability"]["status"] == "available"
+    assert not calendar.calls and not mailer.calls
+
+
+def test_failed_hash_is_detected_once_and_successful_retry_completes(monkeypatch, tmp_path):
+    monkeypatch.setattr("src.settings.load", _settings)
+    path = tmp_path / "current.pdf"; path.touch()
+    document = DownloadedPDF("https://example/current.pdf", path, "pending-hash")
+    monkeypatch.setattr(main, "_pdf_text", lambda _path: "Wednesday\nSeptember 23, 2026\nGym\nA POOL\n1 Another Team 7:00-8:30")
+    results = iter([[], [{"uid": "event"}]])
+    parser = lambda _text: type("Parser", (), {"parse": lambda self: next(results)})()
+    detected = []
+    history = type("History", (), {"detect": lambda self, *args: detected.append(args),
+        "record_events": lambda self, *args: None, "record_stage": lambda self, *args: None})()
+    calendar, mailer, state = Recorder(), Recorder(), ScheduleState(tmp_path / "state.json")
+    state.data["completed"] = {"hash": "sep-16-known-good", "source_url": "https://example/sep16.pdf"}; state.save()
+    assert not main.run(fetcher=Fetcher(document), parser_class=parser, calendar_factory=lambda: calendar,
+                        mailer_factory=lambda **_kwargs: mailer, state=state, history_factory=lambda _path: history)
+    assert state.data["completed"]["hash"] == "sep-16-known-good"
+    assert main.run(parser_class=parser, calendar_factory=lambda: calendar,
+                    mailer_factory=lambda **_kwargs: mailer, state=state, history_factory=lambda _path: history)
+    assert len(detected) == 1 and calendar.calls == mailer.calls == 1
+    assert state.data["completed"]["hash"] == "pending-hash" and "last_failure" not in state.data
 
 
 def test_pending_document_preserves_existing_completed_schedule(monkeypatch, tmp_path):

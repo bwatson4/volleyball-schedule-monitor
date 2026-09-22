@@ -83,6 +83,7 @@ def test_reachable_website_with_no_schedule_link_records_discovery_failure(monke
 def test_website_failure_recovers_to_healthy_no_games_state(monkeypatch, tmp_path):
     document = selected_document(tmp_path)
     fetcher, state = setup(monkeypatch, tmp_path, {document.url: document})
+    monkeypatch.setattr(main, "_pdf_text", lambda _path: "Wednesday: no games are scheduled this week")
     failure(state, "website/download")
     assert main.run(fetcher=fetcher, parser_class=parser(events=False), state=state)
     assert fetcher.downloads == [document.url]
@@ -94,7 +95,7 @@ def test_website_failure_recovers_to_healthy_no_games_state(monkeypatch, tmp_pat
 def test_website_failure_recovers_when_the_only_readable_document_has_no_games(monkeypatch, tmp_path):
     document = selected_document(tmp_path)
     fetcher, state = setup(monkeypatch, tmp_path, {document.url: document})
-    monkeypatch.setattr(main, "_pdf_text", lambda _path: "Monday Team")
+    monkeypatch.setattr(main, "_pdf_text", lambda _path: "Monday: no games are scheduled this week")
     failure(state, "website/download")
     assert main.run(fetcher=fetcher, state=state)
     assert fetcher.downloads == [document.url]

@@ -84,8 +84,25 @@ class ScheduleState:
         """Forget a non-schedule candidate before it becomes a revision."""
         if self.data.pop("candidate", None) is not None:
             self.save()
+    def parse_unavailable(self, message):
+        """Keep an unparsed revision durable so it can be retried safely.
+
+        An empty parser result for a document that looks like a real schedule
+        is operationally a parse failure, not evidence that the publisher
+        intentionally supplied no games.
+        """
+        candidate = self.data.get("candidate")
+        if candidate:
+            candidate["unparsed"] = True
+            candidate["parse_failure_at"] = now()
+            candidate["parse_failure_message"] = str(message)
+        self.set_failure("parse", RuntimeError(message))
     def mark_stage(self, stage, value=True):
         self.data["candidate"][stage] = value
+        if stage == "parsed":
+            self.data["candidate"].pop("unparsed", None)
+            self.data["candidate"].pop("parse_failure_at", None)
+            self.data["candidate"].pop("parse_failure_message", None)
         self.data[f"last_successful_{stage}"] = now()
         self._clear_failure(stage)
         self.save()

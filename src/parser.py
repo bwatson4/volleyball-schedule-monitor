@@ -26,9 +26,13 @@ class ScheduleParser:
         self.current_pool = None
         self.uid = None
         self.session_counts = {}
+        self.diagnostics = {"date": None, "pool_headings": 0, "flattened_blocks": 0,
+                            "teams_extracted": 0, "alias_matched": False,
+                            "rotation_rounds": 0}
         # This table describes the current session's order of play.  It is
         # deliberately separate from pool membership/history semantics.
         self.rotation_matrix = self._parse_rotation_matrix()
+        self.diagnostics["rotation_rounds"] = len(self.rotation_matrix)
     
     @staticmethod
     def _norm_team(s: str) -> str:
@@ -72,8 +76,9 @@ class ScheduleParser:
 
         # Flattened pdfminer columns: Game 1..N, then each matchup row across
         # all games.  Preserve label order rather than assuming five rounds.
-        first_label = labels[0][0]
-        tokens = [(int(a), int(b)) for line in self.lines[first_label:]
+        # Some newer KVA PDFs put the matrix values before the Game labels;
+        # matchup tokens are unambiguous enough to collect from the document.
+        tokens = [(int(a), int(b)) for line in self.lines
                   for a, b in matchup.findall(line)]
         count = len(labels)
         if not tokens or len(tokens) % count:
@@ -195,6 +200,7 @@ class ScheduleParser:
             if not alias:
                 continue
             LOG.info('Schedule team %r matched configured alias %r', team["name"], alias)
+            self.diagnostics["alias_matched"] = True
             # A team has one logical scheduled session per date.  Gym, pool and
             # time are mutable revision data, not identity.
             session_key = (self.current_date.isoformat(), self._norm_team(team["name"]))
@@ -219,9 +225,10 @@ class ScheduleParser:
     def _flattened_blocks(self):
         """Reconstruct pdfminer output where KVA columns are flattened by row.
 
-        This layout places every gym/pool heading before a repeated numeric slot
-        run, then the team names, and finally one time range per session.  It is
-        accepted only when those independent counts agree.
+        pdfminer is free to emit the visual columns in either direction.  Some
+        KVA PDFs put headings/slots/names/times in that order; others put names,
+        times, slots, then headings.  Identify each independent region instead
+        of relying on their relative order.
         """
         blocks, gym = [], None
         for line in self.lines:
@@ -233,7 +240,9 @@ class ScheduleParser:
             if pool_match and gym:
                 blocks.append((gym, f"{pool_match.group(1).upper()} POOL"))
         if not blocks:
+            LOG.debug("flattened reconstruction rejected: no gym/pool headings")
             return []
+        self.diagnostics["pool_headings"] = len(blocks)
 
         # Find the longest contiguous run of slot numbers.  Matchup values such
         # as "1v5" deliberately do not qualify.
@@ -247,10 +256,12 @@ class ScheduleParser:
         if run:
             runs.append(run)
         if not runs:
+            LOG.debug("flattened reconstruction rejected: no numeric slot run")
             return []
         slots = max(runs, key=len)
         block_count = len(blocks)
         if len(slots) < block_count or len(slots) % block_count:
+            LOG.debug("flattened reconstruction rejected: %d slots for %d pools", len(slots), block_count)
             return []
         teams_per_block = len(slots) // block_count
         slot_pattern = [value for _, value in slots[:teams_per_block]]
@@ -258,28 +269,48 @@ class ScheduleParser:
             [value for _, value in slots[offset:offset + teams_per_block]] != slot_pattern
             for offset in range(0, len(slots), teams_per_block)
         ):
+            LOG.debug("flattened reconstruction rejected: slot pattern is inconsistent")
             return []
-
-        team_start = slots[-1][0] + 1
         team_count = block_count * teams_per_block
-        team_names = self.lines[team_start:team_start + team_count]
-        if len(team_names) != team_count or any(
-            re.fullmatch(r"\d+", name) or re.search(r"\d+v\d+", name, re.IGNORECASE)
-            for name in team_names
-        ):
-            return []
         time_pattern = re.compile(r"(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})")
-        times = [match.groups() for line in self.lines[team_start + team_count:] for match in [time_pattern.search(line)] if match]
-        if len(times) < block_count:
-            return []
 
-        return [
+        # A team region is a contiguous run of non-structural text.  Looking
+        # for it independently fixes the Sep 23 extraction, where all names
+        # appear *before* the slots and headings.
+        def is_team_line(line):
+            return not (re.fullmatch(r"\d+", line) or time_pattern.search(line)
+                        or re.search(r"\d+\s*[vV]\s*\d+", line)
+                        or re.match(r"^(?:game|round)\s*\d+\b", line, re.I)
+                        or re.match(r"^[A-Z]\s+POOL(?:\s*[-–].*)?\s*$", line, re.I)
+                        or any(line.casefold().startswith(g.casefold()) for g in self.gyms)
+                        or self.detect_date(line))
+        runs, run = [], []
+        for index, line in enumerate(self.lines):
+            if is_team_line(line):
+                run.append((index, line))
+            elif run:
+                runs.append(run); run = []
+        if run:
+            runs.append(run)
+        team_regions = [run for run in runs if len(run) == team_count]
+        if len(team_regions) != 1:
+            LOG.debug("flattened reconstruction rejected: expected one %d-team region, found %d", team_count, len(team_regions))
+            return []
+        team_names = [line for _, line in team_regions[0]]
+        times = [match.groups() for line in self.lines for match in [time_pattern.search(line)] if match]
+        if len(times) < block_count:
+            LOG.debug("flattened reconstruction rejected: %d times for %d pools", len(times), block_count)
+            return []
+        reconstructed = [
             (gym_name, pool, [
                 {"num": slot_pattern[position], "name": team_names[block_index * teams_per_block + position]}
                 for position in range(teams_per_block)
             ], *times[block_index])
             for block_index, (gym_name, pool) in enumerate(blocks)
         ]
+        self.diagnostics["flattened_blocks"] = len(reconstructed)
+        self.diagnostics["teams_extracted"] = len(team_names)
+        return reconstructed
 
     def _parse_flattened_layout(self):
         for line in self.lines:
@@ -305,6 +336,7 @@ class ScheduleParser:
 
             # Detect date lines
             if self.detect_date(line):
+                self.diagnostics["date"] = self.current_date.isoformat() if self.current_date else None
                 # some lines contain both gym and date
                 self.detect_gym(line)
                 i += 1
@@ -320,6 +352,7 @@ class ScheduleParser:
                 block, next_i, gym_for_block, pool_for_block = self.extract_block(i)
                 start_raw, end_raw = self.extract_time(block)
                 teams = self.extract_teams(block)
+                self.diagnostics["teams_extracted"] += len(teams)
                 self._append_matching_events(teams, gym_for_block, pool_for_block, start_raw, end_raw)
 
                 i = next_i
@@ -329,4 +362,8 @@ class ScheduleParser:
 
         if not self.events:
             self._parse_flattened_layout()
+        LOG.info("parser diagnostics date=%s pools=%d flattened_blocks=%d teams=%d aliases=%s matched=%s rotation_rounds=%d events=%d",
+                 self.diagnostics["date"], self.diagnostics["pool_headings"], self.diagnostics["flattened_blocks"],
+                 self.diagnostics["teams_extracted"], self.team_names, self.diagnostics["alias_matched"],
+                 self.diagnostics["rotation_rounds"], len(self.events))
         return self.events

@@ -222,6 +222,125 @@ Net Win
 6:30-8:00
 8:00- 9:30"""
 
+SEP_23_2026_PDFMINER_TEXT = """2026 KVA Co-Ed League
+Wednesday
+September 23, 2026
+Serves You Right
+Block Buster
+Back Seat Sets
+Chewblockas
+Thin Blue Line
+Net Win
+The VolleyBrawlers
+Setting Ducks
+Bet on the Net
+Volley Ballers
+Watch my 6
+Smash Or Pass
+Bumpernickels
+Bit Tipsy
+Schanzenblocks
+Two Bump Chumps
+Block Party
+Underdogs
+Deez Netz
+Just the Tip
+To Kill A Rocking Serve
+Spike Up Your Life
+Leisure Athlete
+Holy Blockamole
+Ace Holes
+Play to Win
+Set Destroyers
+I'd Hit That
+No Non Sets
+Nice Tips
+Roadrunners
+Spike Wazowski
+Fire Attack
+Court Ordered Community Service
+Notorious D.I.G.
+Smash bros
+VolleyPaulers
+Safe Sets
+Setsy 3.0
+Spikeachu
+1v5
+1v4
+1v3
+1v2
+3v4
+2v3
+3v5
+2v4
+4v5
+2v5
+7:00-8:30
+8:30-10:00
+7:00-8:30
+8:30-10:00
+7:00-8:15
+8:15-9:30
+6:30-8:00
+8:00-9:30
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+1
+2
+3
+4
+5
+PACWAY
+D POOL
+F POOL
+KCS
+A POOL
+G POOL
+TCC
+E POOL
+B POOL
+OLPH
+H POOL
+C POOL
+Game 1
+Game 2
+Game 3
+Game 4
+Game 5"""
+
 
 def test_current_flattened_wednesday_schedule_reconstructs_chewblaccas_session():
     from src.parser import ScheduleParser
@@ -249,6 +368,34 @@ def test_current_flattened_wednesday_schedule_reconstructs_chewblaccas_session()
         {"round": "Game 4", "pairings": [(1, 2), (4, 5)]},
         {"round": "Game 5", "pairings": [(3, 4), (2, 5)]},
     ]
+
+
+def test_sep_23_pdfminer_order_reconstructs_pool_and_rotation():
+    from src.parser import ScheduleParser
+    from ui import _rotation_rounds, _rotation_summary
+    event = ScheduleParser(
+        SEP_23_2026_PDFMINER_TEXT,
+        # The source has the publisher's current spelling; retain both
+        # configurable aliases while checking the requested configured name.
+        team_names=["Chewblaccas", "Chewblockas"],
+        gyms=["PACWAY", "KCS", "TCC", "OLPH"],
+    ).parse()[0]
+    assert (event["date"], event["gym"], event["pool"], event["pool_position"]) == ("2026-09-23", "PACWAY", "D POOL", "4")
+    assert (event["start"], event["end"]) == (datetime(2026, 9, 23, 19), datetime(2026, 9, 23, 20, 30))
+    assert [(team["position"], team["name"]) for team in event["pool_teams"]] == [
+        (1, "Serves You Right"), (2, "Block Buster"), (3, "Back Seat Sets"), (5, "Thin Blue Line")]
+    assert event["rotation_matrix"] == [
+        {"round": "Game 1", "pairings": [(1, 5), (2, 3)]},
+        {"round": "Game 2", "pairings": [(1, 4), (3, 5)]},
+        {"round": "Game 3", "pairings": [(1, 3), (2, 4)]},
+        {"round": "Game 4", "pairings": [(1, 2), (4, 5)]},
+        {"round": "Game 5", "pairings": [(3, 4), (2, 5)]},
+    ]
+    rounds = _rotation_rounds(event)
+    assert [(round_["status"], round_["opponent"]) for round_ in rounds] == [
+        ("SIT", ""), ("PLAY", "Serves You Right"), ("PLAY", "Block Buster"),
+        ("PLAY", "Thin Blue Line"), ("PLAY", "Back Seat Sets")]
+    assert _rotation_summary(rounds) == "Sit 1 · Play 4 straight"
 
 
 def test_rotation_matrix_accepts_spacing_and_case_variants():
