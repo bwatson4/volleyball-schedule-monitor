@@ -11,6 +11,7 @@ import logging
 import os
 import sqlite3
 import json
+import difflib
 from collections import Counter
 from datetime import date, datetime
 from pathlib import Path
@@ -176,6 +177,7 @@ class HistoryStore:
             db.executemany("""INSERT OR REPLACE INTO parsed_pool_team
                 (content_hash, game_date, season, pool, team_normalized, display_name, pool_position)
                 VALUES (?, ?, ?, ?, ?, ?, ?)""", roster_rows)
+            self._reconcile_week_context(db, {season_for_date(event["date"]) for event in events})
 
     @staticmethod
     def _event_teams(event: dict) -> list[tuple[str, str, str | None]]:
@@ -404,9 +406,76 @@ class HistoryStore:
                     uncertain.append(decision)
                 elif decision.action == "new":
                     created.append(decision)
+            learned.extend(self._reconcile_week_context(db, {row["season"] for row in rows}, resolver))
+            accepted = {(season, item.normalized) for item in learned}
+            uncertain = [item for item in uncertain if (season, item.normalized) not in accepted]
+            resolved = {(row["season"], resolver.resolve(row["season"], row["display_name"]).canonical_normalized)
+                        for row in rows}
             after = len(resolved)
             return {"season": season, "dry_run": dry_run, "observations": len(rows), "before": before,
                     "after": after, "learned": learned, "uncertain": uncertain, "created": created}
+
+    @staticmethod
+    def _reconcile_week_context(db, seasons, resolver=None):
+        """Learn only unique, plausible links between complete consecutive league snapshots."""
+        resolver = resolver or TeamIdentityResolver(db)
+        learned = []
+        for season in seasons:
+            rows = list(db.execute("""SELECT p.game_date, p.pool, p.display_name FROM parsed_pool_team p
+                JOIN schedule_revision r ON r.content_hash=p.content_hash
+                WHERE p.season=? AND r.parsed_at IS NOT NULL AND p.content_hash=(
+                    SELECT q.content_hash FROM parsed_pool_team q JOIN schedule_revision s
+                    ON s.content_hash=q.content_hash WHERE q.season=p.season AND q.game_date=p.game_date
+                    AND s.parsed_at IS NOT NULL ORDER BY s.detected_at DESC LIMIT 1)
+                ORDER BY p.game_date, p.pool, p.display_name""", (season,)))
+            weeks = {}
+            for row in rows:
+                weeks.setdefault(row["game_date"], []).append(row)
+            for prior_day, current_day in zip(sorted(weeks), sorted(weeks)[1:]):
+                prior, current = weeks[prior_day], weeks[current_day]
+                # A selected-pool-only archive cannot establish league-wide absence.
+                if len({r["pool"] for r in prior}) < 2 or len({r["pool"] for r in current}) < 2:
+                    continue
+                aliases, canonicals = resolver._season(season)
+                def identity(row):
+                    key = normalize_team(row["display_name"])
+                    return aliases.get(key, (key, row["display_name"]))[0]
+                old_ids = {identity(r) for r in prior}
+                new_ids = {identity(r) for r in current}
+                if len(old_ids & new_ids) < 3:
+                    continue
+                missing_old = [r for r in prior if identity(r) not in new_ids]
+                missing_new = [r for r in current if identity(r) not in old_ids]
+                proposals = []
+                for new in missing_new:
+                    new_key = normalize_team(new["display_name"])
+                    candidates = []
+                    for old in missing_old:
+                        old_id = identity(old)
+                        old_rank, new_rank = pool_rank(old["pool"]), pool_rank(new["pool"])
+                        if old_rank is None or new_rank is None or abs(old_rank - new_rank) > 1:
+                            continue
+                        score = difflib.SequenceMatcher(None, new_key, old_id).ratio() * 100
+                        if score >= resolver.CONTEXT_THRESHOLD:
+                            candidates.append((score, old_id, old))
+                    candidates.sort(reverse=True, key=lambda item: item[0])
+                    if not candidates:
+                        continue
+                    best = candidates[0]
+                    if len(candidates) > 1 and best[0] - candidates[1][0] < resolver.CONTEXT_GAP:
+                        continue
+                    if best[1] not in canonicals:
+                        continue
+                    proposals.append((new, best[1], best[0]))
+                for new, old_id, score in proposals:
+                    # Both sides must choose one another; never consume a prior team twice.
+                    if sum(other_id == old_id for _, other_id, _ in proposals) != 1:
+                        continue
+                    decision = resolver.learn_contextual(season, new["display_name"], old_id, score)
+                    learned.append(decision)
+                    LOG.info('Contextual team alias learned: %r -> %r season=%s score=%.1f reason=consecutive_week_unique_match',
+                             new["display_name"], decision.canonical_name, season, score)
+        return learned
 
     def backfill_pool_rosters(self, season: str, dry_run: bool = False, pdf_dir: Path | None = None) -> dict:
         """Safely fill missing full rosters from retained, immutable PDFs.

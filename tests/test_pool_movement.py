@@ -1,4 +1,5 @@
 from datetime import datetime
+import sqlite3
 
 from src.history import HistoryStore
 
@@ -62,3 +63,44 @@ def test_first_week_and_pool_boundaries(tmp_path):
                           "league_pools": full_roster(A=["Chewblaccas", "Promoted"], B=["Other"])})
     # The missing historical promoted team is reported instead of inventing an A-boundary move.
     assert not store.dashboard(["Chewblaccas"])["pool_movement"]["validation"]["valid"]
+
+
+def test_contextual_typo_is_learned_repaired_and_persisted(tmp_path):
+    path = tmp_path / "history.sqlite3"
+    store = HistoryStore(path)
+    prior = full_roster(C=["Team Down"], D=["Chewblaccas", "Stay 1", "Stay 2", "Stay 3"], E=["Block Busters"])
+    current = full_roster(C=["Other C"], D=["Chewblockas", "Stay 1", "Stay 2", "Stay 3", "Team Down", "Block Buster"], E=["Other E"])
+    record(store, "one", {**event("old", "2026-09-16", "D", ["Chewblaccas", "Stay 1", "Stay 2", "Stay 3"]), "league_pools": prior})
+    record(store, "two", {**event("new", "2026-09-23", "D", ["Chewblockas", "Stay 1", "Stay 2", "Stay 3", "Team Down", "Block Buster"], source="Chewblockas"), "league_pools": current})
+    with sqlite3.connect(path) as db:
+        db.execute("DELETE FROM team_alias WHERE alias_normalized='chewblockas'")
+    result = store.repair_team_identities("2026-27")
+    assert [(d.normalized, d.canonical_name) for d in result["learned"]] == [("chewblockas", "Chewblaccas")]
+    assert not store.repair_team_identities("2026-27")["learned"]
+    reloaded = HistoryStore(path)
+    with sqlite3.connect(path) as db:
+        assert db.execute("SELECT canonical_normalized FROM team_alias WHERE alias_normalized='chewblockas'").fetchone()[0] == "chewblaccas"
+        assert db.execute("SELECT display_name FROM parsed_pool_team WHERE display_name='Chewblockas'").fetchone()[0] == "Chewblockas"
+    movement = reloaded.dashboard(["Chewblaccas"])["pool_movement"]
+    own = next(row for row in movement["movements"] if row["is_user_team"])
+    assert (own["canonical_name"], own["previous_pool"], own["current_pool"], own["direction"]) == ("Chewblaccas", "D", "D", "same")
+    assert not any(row["status"] == "missing_previous_week" for row in movement["movements"] if row["is_user_team"])
+    assert reloaded.dashboard()["current_games"][0]["source_team_canonical_name"] == "Chewblaccas"
+    assert next(row for row in movement["movements"] if row["canonical_name"] == "Block Busters")["direction"] == "up"
+
+
+def test_context_requires_league_overlap_and_rejects_unrelated_or_ambiguous_names(tmp_path):
+    for old_names, new_name, complete in [(["Chewblaccas"], "Chewblockas", False),
+                                           (["Completely Different"], "Chewblockas", True),
+                                           (["Chewblaccas", "Chewblarkas"], "Chewblockas", True)]:
+        store = HistoryStore(tmp_path / (new_name + str(len(old_names)) + old_names[0] + ".sqlite3"))
+        prior = full_roster(C=["Team Down"], D=[*old_names, "Stay 1", "Stay 2", "Stay 3"], E=["Team Up"])
+        current = full_roster(D=[new_name, "Stay 1", "Stay 2", "Stay 3", "Team Down", "Team Up"])
+        if complete:
+            current += full_roster(C=["Other C"], E=["Other E"])
+        record(store, "one", {**event("old", "2026-09-16", "D", old_names), "league_pools": prior})
+        record(store, "two", {**event("new", "2026-09-23", "D", [new_name], source=new_name), "league_pools": current})
+        assert not store.repair_team_identities("2026-27")["learned"]
+        movements = store.dashboard()["pool_movement"]["movements"]
+        assert any(row["canonical_name"] == new_name and row["status"] == "missing_previous_week"
+                   for row in movements), (old_names, movements)

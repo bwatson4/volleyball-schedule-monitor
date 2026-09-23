@@ -53,6 +53,8 @@ class TeamIdentityResolver:
     CONFIDENCE_GAP = 8.0
     MIN_SINGLE_EDIT_LENGTH = 9
     DIAGNOSTIC_THRESHOLD = 80.0
+    CONTEXT_THRESHOLD = 70.0
+    CONTEXT_GAP = 8.0
 
     def __init__(self, db, persist: bool = True):
         self.db, self.persist = db, persist
@@ -114,8 +116,16 @@ class TeamIdentityResolver:
         aliases, _ = self._season(season)
         aliases[decision.normalized] = (decision.canonical_normalized, decision.canonical_name)
         if self.persist:
-            self.db.execute("INSERT OR IGNORE INTO team_alias(season, alias_normalized, canonical_normalized) VALUES (?, ?, ?)",
+            self.db.execute("""INSERT INTO team_alias(season, alias_normalized, canonical_normalized) VALUES (?, ?, ?)
+                ON CONFLICT(season, alias_normalized) DO UPDATE SET canonical_normalized=excluded.canonical_normalized""",
                             (season, decision.normalized, decision.canonical_normalized))
+
+    def learn_contextual(self, season: str, raw_name: str, canonical_key: str, score: float) -> IdentityDecision:
+        aliases, canonicals = self._season(season)
+        decision = IdentityDecision(normalize_team(raw_name), canonical_key, canonicals[canonical_key],
+                                    "contextual", score, canonicals[canonical_key])
+        self._learn(season, decision)
+        return decision
 
     def _uncertain(self, season, alias, canonical, score):
         if self.persist:
