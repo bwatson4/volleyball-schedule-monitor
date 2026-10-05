@@ -42,6 +42,21 @@ adult-indoor page (`https://kvapack.ca/adult-indoor/`). It validates candidate
 documents and selects the PDF whose extracted text matches the configured
 schedule match text; no PDF filename or direct URL is hard-coded.
 
+Every invocation scans the webpage before resuming an incomplete schedule.
+The freshly selected PDF supersedes an older failed candidate when its content
+changes, including changes published at the same URL. An unchanged incomplete
+PDF is retried without creating another history revision. A structured PDF
+that produces zero events for the configured team aliases remains a parse
+failure and never replaces the last known-good schedule.
+
+The UI reports these timestamps separately: **Last website scan** records a
+successful webpage fetch/discovery, **Last schedule document found** records
+discovery of a validated schedule document, **Last successful parse** records
+successful event parsing, and **Last completed schedule update** records
+completion of parsing, calendar reconciliation, and email. A parse failure
+remains visible as a monitor problem while successful website scans continue
+to advance. Failed webpage fetches do not advance the scan timestamp.
+
 Runtime state, downloaded PDFs, and settings live under
 `/var/lib/volleyball-schedule-monitor`. Logs go to journald. None of those
 files belong in Git.

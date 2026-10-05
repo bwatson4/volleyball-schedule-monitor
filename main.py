@@ -66,86 +66,86 @@ def run(fetcher=None, parser_class=None, calendar_factory=None, mailer_factory=N
         return events
     logger.info("run start; last completed=%s", state.data.get("last_successfully_completed_run"))
     try:
-        # An incomplete candidate is processed from its durable copy first, even if the site is down.
-        path = candidate.get("pdf_path") if candidate and not state.complete_if_ready() else None
-        if path and not __import__("pathlib").Path(path).exists(): path = None
+        # Fresh discovery must precede retries of a possibly stale candidate.
+        state.complete_if_ready()
         parsed_events = None
-        if not path:
-            fetcher = fetcher or PDFFetcher(PDF_DIR, KEYWORD, PAGE_URL)
-            state.website_scanned()
-            urls = fetcher.get_schedule_urls()
-            # An attempted scan is not proof of connectivity; only a returned
-            # candidate list establishes website/download recovery.
-            state.mark_website_success()
-            if not urls:
-                logger.info("No published schedule PDF found.")
-                state.schedule_discovery_failed(RuntimeError("website reachable but no schedule link was discovered"))
-                return False
-            schedule_matches, readable_candidates = [], []
-            wanted_text = normalize_text(settings["schedule_match_text"])
-            for url in urls:
-                try:
-                    downloaded = fetcher.download(url)
-                    pdf_text = _pdf_text(downloaded.path)
-                    readable_candidates.append((downloaded, pdf_text))
-                except Exception as exc:
-                    logger.warning("Rejected schedule candidate %s: %s", url, exc)
-                    continue
-                if wanted_text in normalize_text(pdf_text):
-                    schedule_matches.append((downloaded, pdf_text))
-                else:
-                    logger.info("Valid schedule candidate does not match schedule text %r: %s", settings["schedule_match_text"], downloaded.url)
-            if not schedule_matches:
-                notices = [(item, _publisher_notice(text)) for item, text in readable_candidates]
-                notices = [(item, notice) for item, notice in notices if notice]
-                if len(notices) == 1:
-                    downloaded, notice = notices[0]
-                    state.schedule_unavailable("waiting_for_schedule", downloaded.url, notice)
-                    logger.info("current schedule document is waiting for game data: %s", downloaded.url)
-                    return True
-                if len(readable_candidates) == 1:
-                    downloaded, pdf_text = readable_candidates[0]
-                    try:
-                        parsed_events = parse_schedule(pdf_text)
-                    except Exception as exc:
-                        state.set_failure("parse", exc); logger.exception("parsing failed"); return False
-                    if not parsed_events:
-                        notice = _publisher_notice(pdf_text)
-                        no_games = _no_games_notice(pdf_text)
-                        if notice or no_games:
-                            state.schedule_unavailable("waiting_for_schedule" if notice else "no_games_available", downloaded.url, notice or no_games)
-                            logger.info("readable schedule document explicitly has no games")
-                            return True
-                logger.info("No published schedule PDF matched schedule text %r.", settings["schedule_match_text"])
-                state.schedule_discovery_failed(RuntimeError("website reachable but no current schedule document matched the configured league"))
-                return False
-            # At this point the response was a validated PDF whose text names
-            # the configured league.  Parsing is a distinct later stage.
-            state.schedule_document_found()
-            if len(schedule_matches) == 1:
-                downloaded, pdf_text = schedule_matches[0]
+        fetcher = fetcher or PDFFetcher(PDF_DIR, KEYWORD, PAGE_URL)
+        urls = fetcher.get_schedule_urls()
+        # An attempted scan is not proof of connectivity; only a returned
+        # candidate list establishes website/download recovery.
+        state.mark_website_success()
+        if not urls:
+            logger.info("No published schedule PDF found.")
+            state.schedule_discovery_failed(RuntimeError("website reachable but no schedule link was discovered"))
+            return False
+        schedule_matches, readable_candidates = [], []
+        wanted_text = normalize_text(settings["schedule_match_text"])
+        for url in urls:
+            try:
+                downloaded = fetcher.download(url)
+                pdf_text = _pdf_text(downloaded.path)
+                readable_candidates.append((downloaded, pdf_text))
+            except Exception as exc:
+                logger.warning("Rejected schedule candidate %s: %s", url, exc)
+                continue
+            if wanted_text in normalize_text(pdf_text):
+                schedule_matches.append((downloaded, pdf_text))
             else:
+                logger.info("Valid schedule candidate does not match schedule text %r: %s", settings["schedule_match_text"], downloaded.url)
+        if not schedule_matches:
+            notices = [(item, _publisher_notice(text)) for item, text in readable_candidates]
+            notices = [(item, notice) for item, notice in notices if notice]
+            if len(notices) == 1:
+                downloaded, notice = notices[0]
+                state.schedule_unavailable("waiting_for_schedule", downloaded.url, notice)
+                logger.info("current schedule document is waiting for game data: %s", downloaded.url)
+                return True
+            if len(readable_candidates) == 1:
+                downloaded, pdf_text = readable_candidates[0]
                 try:
-                    secondary = [(item, parse_schedule(item[1])) for item in schedule_matches]
+                    parsed_events = parse_schedule(pdf_text)
                 except Exception as exc:
                     state.set_failure("parse", exc); logger.exception("parsing failed"); return False
-                secondary = [(item, events) for item, events in secondary if events]
-                if len(secondary) != 1:
-                    if not secondary:
-                        downloaded, pdf_text = schedule_matches[0]
-                        parsed_events = []
-                    else:
-                        logger.error("%d PDFs match schedule text %r; team aliases did not identify exactly one candidate", len(schedule_matches), settings["schedule_match_text"])
-                        state.schedule_discovery_failed(RuntimeError("multiple current schedule documents matched; unable to select one"))
-                        return False
+                if not parsed_events:
+                    notice = _publisher_notice(pdf_text)
+                    no_games = _no_games_notice(pdf_text)
+                    if notice or no_games:
+                        state.schedule_unavailable("waiting_for_schedule" if notice else "no_games_available", downloaded.url, notice or no_games)
+                        logger.info("readable schedule document explicitly has no games")
+                        return True
+            logger.info("No published schedule PDF matched schedule text %r.", settings["schedule_match_text"])
+            state.schedule_discovery_failed(RuntimeError("website reachable but no current schedule document matched the configured league"))
+            return False
+        # At this point the response was a validated PDF whose text names
+        # the configured league.  Parsing is a distinct later stage.
+        state.schedule_document_found()
+        if len(schedule_matches) == 1:
+            downloaded, pdf_text = schedule_matches[0]
+        else:
+            try:
+                secondary = [(item, parse_schedule(item[1])) for item in schedule_matches]
+            except Exception as exc:
+                state.set_failure("parse", exc); logger.exception("parsing failed"); return False
+            secondary = [(item, events) for item, events in secondary if events]
+            if len(secondary) != 1:
+                if not secondary:
+                    downloaded, pdf_text = schedule_matches[0]
+                    parsed_events = []
+                else:
+                    logger.error("%d PDFs match schedule text %r; team aliases did not identify exactly one candidate", len(schedule_matches), settings["schedule_match_text"])
+                    state.schedule_discovery_failed(RuntimeError("multiple current schedule documents matched; unable to select one"))
+                    return False
+            if secondary:
                 (downloaded, pdf_text), parsed_events = secondary[0]
-                logger.warning("Multiple PDFs match schedule text; selected %s using team aliases", downloaded.url)
-            if state.data.get("completed", {}).get("hash") == downloaded.digest:
-                logger.info("schedule unchanged and complete; source URL may have changed")
-                return True
-            candidate = state.begin_candidate(downloaded.digest, downloaded.path, downloaded.url); path = str(downloaded.path)
+            logger.warning("Multiple PDFs match schedule text; selected %s using team aliases", downloaded.url)
+        if state.data.get("completed", {}).get("hash") == downloaded.digest:
+            logger.info("schedule unchanged and complete; source URL may have changed")
+            return True
+        previous_hash = candidate.get("hash")
+        candidate = state.begin_candidate(downloaded.digest, downloaded.path, downloaded.url); path = str(downloaded.path)
+        if previous_hash != candidate["hash"]:
             history_write("detect", candidate["hash"], candidate["detected_at"], candidate["source_url"])
-            logger.info("schedule change detected hash=%s", candidate["hash"])
+        logger.info("schedule change detected hash=%s", candidate["hash"])
         if not candidate.get("parsed"):
             try:
                 parsed_events = parsed_events if parsed_events is not None else parse_schedule(_pdf_text(path))

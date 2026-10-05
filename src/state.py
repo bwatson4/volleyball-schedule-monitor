@@ -21,7 +21,6 @@ class ScheduleState:
             return {"version": 1}
     def save(self): atomic_json_write(self.path, self.data)
     def run_started(self): self.data["last_attempted_run"] = now(); self.save()
-    def website_scanned(self): self.data["last_website_scan"] = now(); self.save()
     def set_failure(self, stage, exc): self.data["last_failure"] = {"stage":stage,"message":str(exc),"at":now()}; self.save()
     def _clear_failure(self, stage=None):
         failure = self.data.get("last_failure")
@@ -78,7 +77,10 @@ class ScheduleState:
         candidate = self.data.get("candidate", {})
         if candidate.get("hash") != digest:
             candidate = {"hash":digest,"pdf_path":str(pdf_path),"source_url":source_url,"detected_at":now(),"parsed":False,"calendar":False,"email":False}
-            self.data["candidate"] = candidate; self.save()
+            self.data["candidate"] = candidate
+        # Identical content may have moved to a new URL or local download path.
+        candidate.update(pdf_path=str(pdf_path), source_url=source_url)
+        self.save()
         return candidate
     def discard_candidate(self):
         """Forget a non-schedule candidate before it becomes a revision."""

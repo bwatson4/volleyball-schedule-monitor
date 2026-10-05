@@ -114,6 +114,22 @@ def test_new_website_failure_replaces_previous_failure(monkeypatch, tmp_path):
     assert latest != first
 
 
+def test_failed_website_scan_does_not_advance_scan_time_or_retry_candidate(monkeypatch, tmp_path):
+    _fetcher, state = setup(monkeypatch, tmp_path, {})
+    document = selected_document(tmp_path)
+    state.begin_candidate(document.digest, document.path, document.url)
+    state.data["last_website_scan"] = "2026-09-30T12:00:00+00:00"
+    state.save()
+    parsed = []
+    def parser_factory(text):
+        parsed.append(text)
+        raise AssertionError("must not retry before successful discovery")
+    assert not main.run(fetcher=FailingFetcher(), parser_class=parser_factory, state=state)
+    assert state.data["last_website_scan"] == "2026-09-30T12:00:00+00:00"
+    assert not parsed
+    assert state.data["candidate"]["hash"] == document.digest
+
+
 def test_parse_failure_is_not_cleared_by_website_success(monkeypatch, tmp_path):
     fetcher, state = setup(monkeypatch, tmp_path, {})
     failure(state, "parse")
@@ -137,7 +153,7 @@ def test_calendar_failure_remains_until_calendar_succeeds(monkeypatch, tmp_path)
     failure(state, "calendar")
     assert not main.run(fetcher=fetcher, parser_class=parser(), calendar_factory=lambda: Sink(RuntimeError("calendar down")), state=state)
     assert state.data["last_failure"]["stage"] == "calendar"
-    assert main.run(parser_class=parser(), calendar_factory=Sink, mailer_factory=lambda **_: Sink(), state=state)
+    assert main.run(fetcher=fetcher, parser_class=parser(), calendar_factory=Sink, mailer_factory=lambda **_: Sink(), state=state)
     assert "last_failure" not in state.data
 
 
@@ -147,7 +163,7 @@ def test_email_failure_remains_until_email_succeeds(monkeypatch, tmp_path):
     failure(state, "email")
     assert not main.run(fetcher=fetcher, parser_class=parser(), calendar_factory=Sink, mailer_factory=lambda **_: Sink(RuntimeError("email down")), state=state)
     assert state.data["last_failure"]["stage"] == "email"
-    assert main.run(parser_class=parser(), calendar_factory=Sink, mailer_factory=lambda **_: Sink(), state=state)
+    assert main.run(fetcher=fetcher, parser_class=parser(), calendar_factory=Sink, mailer_factory=lambda **_: Sink(), state=state)
     assert "last_failure" not in state.data
 
 
