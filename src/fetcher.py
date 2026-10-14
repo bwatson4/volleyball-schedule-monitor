@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import logging
+import re
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,6 +17,11 @@ from config import HEADERS, HTTP_TIMEOUT_SECONDS, PDF_MAX_BYTES
 
 LOG = logging.getLogger("schedule_monitor.fetcher")
 MAX_CANDIDATES = 12
+DAY_NAMES = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
+
+
+def league_days(text):
+    return DAY_NAMES.intersection(re.findall(r"\b\w+\b", text.casefold()))
 
 
 @dataclass
@@ -41,29 +47,44 @@ def _safe_http_url(url: str) -> bool:
 
 
 class PDFFetcher:
-    def __init__(self, pdf_dir, keyword="schedule", page_url="https://kvapack.ca/adult-indoor/", session=None, timeout=HTTP_TIMEOUT_SECONDS, max_bytes=PDF_MAX_BYTES):
+    def __init__(self, pdf_dir, keyword="schedule", page_url="https://kvapack.ca/adult-indoor/", session=None, timeout=HTTP_TIMEOUT_SECONDS, max_bytes=PDF_MAX_BYTES, league_identity=None):
         self.pdf_dir, self.keyword, self.page_url = Path(pdf_dir), keyword, page_url
+        self.league_identity = league_identity if league_identity and league_days(league_identity) else keyword
+        self.link_contexts = {}
         self.session, self.timeout, self.max_bytes = session or requests.Session(), timeout, max_bytes
 
     def _league_context(self, anchor) -> str:
-        """Return the nearest preceding league heading, when WordPress has one."""
-        heading = anchor.find_previous(["h1", "h2", "h3", "h4", "h5", "h6"])
-        return heading.get_text(" ", strip=True).casefold() if heading else ""
+        """Find a league heading without inheriting across unrelated sections."""
+        section = anchor.find_parent(["section", "article"])
+        for heading in anchor.find_all_previous(["h1", "h2", "h3", "h4", "h5", "h6"]):
+            if section and section not in heading.parents:
+                return ""
+            text = heading.get_text(" ", strip=True).casefold()
+            if league_days(text):
+                return text
+            # A nested "Schedule" subheading inherits its league; a new
+            # top-level unrelated section cannot inherit a preceding league.
+            if heading.name in {"h1", "h2"}:
+                return ""
+        return ""
 
     def _is_configured_league(self, anchor) -> bool:
         # KEYWORD is historically "wednesday night".  The stable part of a
         # league heading is its day name, while remaining callers may pass a
         # generic keyword such as "schedule".
-        day_names = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
-        requested_days = day_names.intersection(self.keyword.casefold().split())
-        return bool(requested_days.intersection(self._league_context(anchor).split()))
+        requested_days = league_days(self.league_identity)
+        context = self._league_context(anchor)
+        if not context:
+            context = " ".join(filter(None, [anchor.get_text(" ", strip=True), anchor.get("aria-label"), anchor.get("title")])).casefold()
+        qualifiers = set(re.findall(r"\w+", self.league_identity.casefold())) - DAY_NAMES - {"night", "league", "schedule", "weekly", "the"}
+        return league_days(context) == requested_days and qualifiers.issubset(set(re.findall(r"\w+", context)))
 
     def get_schedule_urls(self) -> list[str]:
         """Return ranked, schedule-like anchors without trusting URL suffixes.
 
         KVA has used both icon links adjacent to "Schedule - Click Here" and
-        named links such as "Weekly Schedule".  Keep the former as a legacy
-        fallback, but rank a named weekly link ahead of noisy icon anchors.
+        named links such as "Weekly Schedule". For configured playing days,
+        context establishes eligibility before the strongest links are ranked.
         """
         response = self.session.get(self.page_url, headers=HEADERS, timeout=self.timeout)
         try:
@@ -73,6 +94,8 @@ class PDFFetcher:
             response.close()
 
         candidates: list[tuple[int, int, str]] = []
+        self.link_contexts = {}
+        configured_headings = set()
         seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
             # KVA's WordPress markup may put the visible phrase beside an emoji
@@ -83,12 +106,14 @@ class PDFFetcher:
                 continue
             parent_text = anchor.parent.get_text(" ", strip=True) if anchor.parent and anchor.parent.name not in {"[document]", "html", "body"} else ""
             parent_lowered = parent_text.casefold()
-            if "standing" in parent_lowered or "registration" in parent_lowered:
+            if ("standing" in parent_lowered or "registration" in parent_lowered) and "schedule" not in own_lowered:
                 continue
             # Directly named links are reliable.  Parent-context matches retain
             # compatibility with prior WordPress emoji/image link markup.
             weekly = "weekly schedule" in own_lowered or "weekly schedule" in parent_lowered
             configured_league = self._is_configured_league(anchor)
+            if league_days(self.league_identity) and not configured_league:
+                continue
             if weekly and configured_league:
                 priority = 0
             elif weekly:
@@ -108,7 +133,18 @@ class PDFFetcher:
             if resolved not in seen:
                 seen.add(resolved)
                 candidates.append((priority, len(candidates), resolved))
+                context = self._league_context(anchor)
+                if context:
+                    configured_headings.add(context)
+                self.link_contexts[resolved] = {"league_heading": context, "link_text": own_context, "priority": priority}
         candidates.sort(key=lambda item: item[:2])
+        if league_days(self.league_identity) and candidates:
+            if len(configured_headings) > 1:
+                raise ValueError("multiple publisher league sections match configured identity; use a more specific league selector")
+            best = candidates[0][0]
+            candidates = [item for item in candidates if item[0] == best]
+            if len(candidates) > MAX_CANDIDATES:
+                raise ValueError("too many equally eligible current schedule links; selection is ambiguous")
         urls = [url for _priority, _order, url in candidates[:MAX_CANDIDATES]]
         if len(candidates) > MAX_CANDIDATES:
             LOG.warning("Schedule candidate limit reached (%d)", MAX_CANDIDATES)
@@ -157,7 +193,7 @@ class PDFFetcher:
             final = self.pdf_dir / f"{digest.hexdigest()}.pdf"
             Path(temporary).replace(final)
             temporary = None
-            LOG.info("Accepted schedule PDF: %s", final_url)
+            LOG.info("Accepted schedule PDF hash=%s publisher_url=%s final_url=%s link_context=%s", digest.hexdigest(), url, final_url, self.link_contexts.get(url, {}))
             return DownloadedPDF(final_url, final, digest.hexdigest())
         finally:
             if temporary:

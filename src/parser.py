@@ -19,14 +19,16 @@ LOG = logging.getLogger("schedule_monitor.parser")
 
 
 class ScheduleParser:
-    def __init__(self, text, team_names=None, gyms=None, pools=POOLS):
+    def __init__(self, text, team_names=None, gyms=None, pools=POOLS, pdf_path=None):
         self.text = text
+        self.pdf_path = pdf_path
         self.lines = self._normalize_lines(text)
         self.events = []
         self.league_pools = {}
 
         self.team_names = [] if team_names is None else (team_names if isinstance(team_names, list) else [team_names])
-        self.team_names_norm = [self._norm_team(n) for n in self.team_names if str(n).strip()]
+        self.team_names = [n for n in self.team_names if self._norm_team(n)]
+        self.team_names_norm = [self._norm_team(n) for n in self.team_names]
         
         self.gyms = gyms or []
         self.pools = pools
@@ -38,7 +40,9 @@ class ScheduleParser:
         self.session_counts = {}
         self.diagnostics = {"date": None, "pool_headings": 0, "flattened_blocks": 0,
                             "teams_extracted": 0, "alias_matched": False,
-                            "rotation_rounds": 0}
+                            "rotation_rounds": 0, "coordinate_blocks": 0,
+                            "failure_kind": None, "structure_rejection": None,
+                            "validated_sessions": 0, "structure_validated": False}
         # This table describes the current session's order of play.  It is
         # deliberately separate from pool membership/history semantics.
         self.rotation_matrix = self._parse_rotation_matrix()
@@ -93,17 +97,23 @@ class ScheduleParser:
         return [{"round": f"Game {number}", "pairings": tokens[index::count]}
                 for index, (_, number) in enumerate(labels)]
 
-    def detect_date(self, line):
+    @staticmethod
+    def _date_in_line(line):
         date_match = re.search(r"([A-Z][a-z]+ \d{1,2}, \d{4})", line)
         if not date_match:
             return None
-
         try:
-            self.current_date = datetime.strptime(date_match.group(1), "%B %d, %Y").date()
-            self.uid = self.current_date.strftime("%Y%m%d")
-            return True
+            return datetime.strptime(date_match.group(1), "%B %d, %Y").date()
         except ValueError:
             return None
+
+    def detect_date(self, line):
+        date = self._date_in_line(line)
+        if date:
+            self.current_date = date
+            self.uid = date.strftime("%Y%m%d")
+            return True
+        return None
 
     def detect_gym(self, line):
         for gym in self.gyms:
@@ -136,7 +146,7 @@ class ScheduleParser:
             nxt = self.lines[j]
 
             # Stop at new gym, new pool, or new date
-            if self.detect_date(nxt):
+            if self._date_in_line(nxt):
                 break
             if any(nxt.lower().startswith(g.lower()) for g in self.gyms):
                 break
@@ -200,15 +210,24 @@ class ScheduleParser:
 
     def _append_matching_events(self, teams, gym, pool, start_raw, end_raw):
         """Append configured-team events for one already reconstructed session."""
-        if not (start_raw and end_raw and self.current_date):
+        matched = [(team, self._matched_alias(team["name"])) for team in teams]
+        if any(alias for _, alias in matched):
+            self.diagnostics["alias_matched"] = True
+        if not (start_raw and end_raw and self.current_date and gym and pool):
             return
         start_24 = self._pm_to_24h(start_raw)
         end_24 = self._pm_to_24h(end_raw)
         start_dt = datetime.strptime(f"{self.current_date} {start_24}", "%Y-%m-%d %H:%M")
         end_dt = datetime.strptime(f"{self.current_date} {end_24}", "%Y-%m-%d %H:%M")
+        if end_dt <= start_dt:
+            raise ValueError("schedule time range must end after it starts")
+        positions = [int(team["num"]) for team in teams]
+        names = [self._norm_team(team["name"]) for team in teams]
+        if (len(teams) >= 2 and positions == list(range(1, len(teams) + 1))
+                and all(names) and len(set(names)) == len(names)):
+            self.diagnostics["validated_sessions"] += 1
         pool_teams = self._pool_teams(teams)
-        for team in teams:
-            alias = self._matched_alias(team["name"])
+        for team, alias in matched:
             if not alias:
                 continue
             LOG.info('Schedule team %r matched configured alias %r', team["name"], alias)
@@ -330,7 +349,10 @@ class ScheduleParser:
                 break
         if not self.current_date:
             return
-        for gym, pool, teams, start_raw, end_raw in self._flattened_blocks():
+        blocks = self._flattened_blocks()
+        if blocks:
+            self.diagnostics["validated_sessions"] = 0
+        for gym, pool, teams, start_raw, end_raw in blocks:
             self._record_pool_roster(pool, teams)
             self._append_matching_events(teams, gym, pool, start_raw, end_raw)
 
@@ -343,6 +365,32 @@ class ScheduleParser:
         return f"{hour:02d}:{minute:02d}"
 
     def parse(self):
+        if self.pdf_path:
+            from src.pdf_structure import pool_tables
+            try:
+                dates = set(re.findall(r"[A-Z][a-z]+ \d{1,2}, \d{4}", self.text))
+                if len(dates) > 1:
+                    blocks, reason = [], "multiple schedule dates require legacy block parsing"
+                else:
+                    blocks, reason = pool_tables(self.pdf_path, self.gyms)
+            except Exception as exc:
+                # Successful text extraction remains usable if coordinate
+                # analysis is unsupported by a PDF or extractor version.
+                blocks, reason = [], f"coordinate extraction failed: {type(exc).__name__}: {exc}"
+                LOG.debug("%s", reason)
+            self.diagnostics["structure_rejection"] = reason
+            if blocks:
+                for line in self.lines:
+                    if self.detect_date(line):
+                        self.diagnostics["date"] = self.current_date.isoformat()
+                        break
+                self.diagnostics["coordinate_blocks"] = len(blocks)
+                self.diagnostics["pool_headings"] = len(blocks)
+                for gym, pool, teams, start, end in blocks:
+                    self.diagnostics["teams_extracted"] += len(teams)
+                    self._record_pool_roster(pool, teams)
+                    self._append_matching_events(teams, gym, pool, start, end)
+                return self._finish()
         i = 0
         while i < len(self.lines):
             line = self.lines[i]
@@ -362,6 +410,7 @@ class ScheduleParser:
 
             # Detect pool lines → extract block
             if self.detect_pool(line):
+                self.diagnostics["pool_headings"] += 1
                 block, next_i, gym_for_block, pool_for_block = self.extract_block(i)
                 start_raw, end_raw = self.extract_time(block)
                 teams = self.extract_teams(block)
@@ -376,11 +425,20 @@ class ScheduleParser:
 
         if not self.events:
             self._parse_flattened_layout()
+        return self._finish()
+
+    def _finish(self):
+        self.diagnostics["structure_validated"] = (
+            self.diagnostics["pool_headings"] > 0
+            and self.diagnostics["validated_sessions"] == self.diagnostics["pool_headings"])
+        if not self.events:
+            self.diagnostics["failure_kind"] = (
+                "text_extraction" if not self.lines else
+                "schedule_structure" if not self.diagnostics["teams_extracted"] else
+                "team_not_matched" if not self.diagnostics["alias_matched"] else
+                "event_generation")
         roster = [{"pool": pool, "teams": teams} for pool, teams in self.league_pools.items()]
         for event in self.events:
             event["league_pools"] = roster
-        LOG.info("parser diagnostics date=%s pools=%d flattened_blocks=%d teams=%d aliases=%s matched=%s rotation_rounds=%d events=%d",
-                 self.diagnostics["date"], self.diagnostics["pool_headings"], self.diagnostics["flattened_blocks"],
-                 self.diagnostics["teams_extracted"], self.team_names, self.diagnostics["alias_matched"],
-                 self.diagnostics["rotation_rounds"], len(self.events))
+        LOG.info("parser diagnostics %s events=%d", self.diagnostics, len(self.events))
         return self.events

@@ -48,9 +48,6 @@ def test_weekly_schedule_is_preferred_over_legacy_links_and_resolves_relative_ur
     urls = PDFFetcher(tmp_path, keyword="wednesday night", page_url="https://kvapack.ca/adult-indoor/", session=session).get_schedule_urls()
     assert urls == [
         "https://kvapack.ca/adult-indoor/documents/current-weekly-schedule",
-        "https://kvapack.ca/uploads/thursday",
-        "https://kvapack.ca/uploads/last-season.pdf",
-        "https://kvapack.ca/uploads/monday.pdf",
     ]
 
 

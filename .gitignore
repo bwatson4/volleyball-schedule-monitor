@@ -33,8 +33,11 @@ schedule_state.json
 
 # Downloaded schedules and temporary files
 *.pdf
+!tests/fixtures/pdfs/*.pdf
+!tests/fixtures/pi-archive/*.pdf
 *.pdf.tmp
 *.tmp
+tmp/
 
 # Editor and OS metadata
 .vscode/

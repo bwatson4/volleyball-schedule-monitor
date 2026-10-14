@@ -543,7 +543,7 @@ class HistoryStore:
         except (OSError, ValueError, AttributeError):
             pass
         events = ScheduleParser(text, team_names=list({row["source_team"] for row in source}),
-                               gyms=list(dict.fromkeys(configured_gyms))).parse()
+                               gyms=list(dict.fromkeys(configured_gyms)), pdf_path=pdf_path).parse()
         rosters = [item for event in events for item in event.get("league_pools", [])]
         if not rosters:
             raise ValueError("PDF parser could not reconstruct a complete league roster")

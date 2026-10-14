@@ -25,6 +25,18 @@ render PDFs and does not require Chromium, PDFium, `pypdfium2`, or Pillow.
 This keeps the dependency set suitable for the original Raspberry Pi Zero W
 (armv6l, 512 MB RAM); use a 32-bit Raspberry Pi OS userspace on that device.
 
+Pool tables are reconstructed from pdfminer's text coordinates before team
+aliases are matched. Heading/gym alignment, consecutive numbered slots,
+team baselines and one time range per pool are validated independently of
+PDF reading order. Unsupported layouts retain the labelled-row and flattened
+text parsers. No OCR or rendering dependency is added.
+
+Parser logs include pool/team counts, extraction method, rotation count and
+`failure_kind`: `text_extraction`, `schedule_structure`, `team_not_matched`,
+or `event_generation`. Zero-event failures retain this diagnostic summary in
+the candidate failure message. An unparsed candidate retries automatically
+on the next scan after a parser update, with its original revision identity.
+
 ## Configuration and runtime data
 
 `examples/volleyball-monitor.env.example` is the protected configuration
@@ -42,12 +54,22 @@ adult-indoor page (`https://kvapack.ca/adult-indoor/`). It validates candidate
 documents and selects the PDF whose extracted text matches the configured
 schedule match text; no PDF filename or direct URL is hard-coded.
 
+For a configured playing day, publisher league headings determine link
+eligibility before download. Only the strongest schedule links within that
+league are considered; other nights and unlabelled sections cannot be fallback
+candidates. Explicit conflicting PDF day labels are rejected. Identical hashes
+at multiple URLs are one document; multiple distinct eligible documents remain
+an ambiguity rather than being chosen by the configured team's presence.
+
 Every invocation scans the webpage before resuming an incomplete schedule.
 The freshly selected PDF supersedes an older failed candidate when its content
 changes, including changes published at the same URL. An unchanged incomplete
-PDF is retried without creating another history revision. A structured PDF
-that produces zero events for the configured team aliases remains a parse
-failure and never replaces the last known-good schedule.
+PDF is retried without creating another history revision. A validated schedule
+whose tables exclude all configured team aliases records `team_not_scheduled`;
+it preserves the last known-good schedule and skips calendar/email. Missing or
+unrecognized structure remains a parse failure. Team absence never establishes
+an explicit publisher no-game state. Repeated observations retain one revision,
+and the PDF remains retryable after alias or parser corrections.
 
 The UI reports these timestamps separately: **Last website scan** records a
 successful webpage fetch/discovery, **Last schedule document found** records

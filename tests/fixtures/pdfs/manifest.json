@@ -1,0 +1,43 @@
+[
+  {
+    "file": "publisher-135.pdf",
+    "url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/10/Adult-Indoor-Schedule-2025_2026-Website-Schedule-135.pdf",
+    "sha256": "4b3823e479fbcc778d160739ccaf3b2f8723a321ad3068fbc6379a6ba7d94cf8",
+    "provenance": "Publisher download; Pi history source URL, archived hash not verified; byte-for-byte verified against read-only Pi export on October 13, 2026"
+  },
+  {
+    "file": "september-16.pdf",
+    "sha256": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+    "provenance": "Existing local retained PDF; byte-for-byte verified against read-only Pi export on October 13, 2026"
+  },
+  {
+    "file": "publisher-132.pdf",
+    "url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/10/Adult-Indoor-Schedule-2025_2026-Website-Schedule-132.pdf",
+    "sha256": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+    "provenance": "Publisher download; Pi history source URL, archived hash not verified; byte-for-byte verified against read-only Pi export on October 13, 2026"
+  },
+  {
+    "file": "publisher-129.pdf",
+    "url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/10/Adult-Indoor-Schedule-2025_2026-Website-Schedule-129.pdf",
+    "sha256": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+    "provenance": "Publisher download; Pi history source URL, archived hash not verified; byte-for-byte verified against read-only Pi export on October 13, 2026"
+  },
+  {
+    "file": "publisher-125.pdf",
+    "url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/09/Adult-Indoor-Schedule-2025_2026-Website-Schedule-125.pdf",
+    "sha256": "08b4ea1c09986bd02ad44aa08f6b90b54d65abe55ddffd24253cb427051ef1be",
+    "provenance": "Publisher download; Pi history source URL, archived hash not verified; byte-for-byte verified against read-only Pi export on October 13, 2026"
+  },
+  {
+    "file": "publisher-122.pdf",
+    "url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/09/Adult-Indoor-Schedule-2025_2026-Website-Schedule-122.pdf",
+    "sha256": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+    "provenance": "Publisher download; Pi history source URL, archived hash not verified; byte-for-byte verified against read-only Pi export on October 13, 2026"
+  },
+  {
+    "file": "publisher-120.pdf",
+    "url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/09/Adult-Indoor-Schedule-2025_2026-Website-Schedule-120.pdf",
+    "sha256": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+    "provenance": "Publisher download; Pi history source URL, archived hash not verified; byte-for-byte verified against read-only Pi export on October 13, 2026"
+  }
+]

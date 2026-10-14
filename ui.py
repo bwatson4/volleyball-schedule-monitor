@@ -250,7 +250,7 @@ def _home_view(state, history, current_time=None):
 def _history_view(state, history):
     revisions, failure = history.get("revisions", []), state.get("last_failure")
     availability = state.get("schedule_availability", {})
-    availability_labels = {"available": "Schedule available", "waiting_for_schedule": "Waiting for schedule", "no_games_available": "No games available yet"}
+    availability_labels = {"available": "Schedule available", "waiting_for_schedule": "Waiting for schedule", "no_games_available": "No games available yet", "team_not_scheduled": "Team not listed in validated schedule"}
     recent = sum(1 for revision in revisions if revision.get("detected_at", "") >= (datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=7)).isoformat())
     values = [("Current schedule availability", availability_labels.get(availability.get("status"), "Schedule available")), ("Publisher note", availability.get("publisher_message")), ("Last website scan", state.get("last_website_scan")), ("Last schedule document found", state.get("last_schedule_document_found")), ("Last schedule change", revisions[0].get("detected_at") if revisions else None), ("Last successful parse", state.get("last_successful_parsed")), ("Last calendar reconciliation", state.get("last_successful_calendar")), ("Last email", state.get("last_successful_email")), ("Last completed schedule update", state.get("last_successfully_completed_run")), ("Revisions in last 7 days", recent), ("Current/last source PDF", revisions[0].get("source_url") if revisions else None)]
     def metric(label, value):
@@ -269,6 +269,8 @@ def _availability_notice(availability):
         return f'<section class="availability"><h2>Waiting for schedule</h2><p>KVA is reachable and the monitor is healthy. The current schedule document does not contain games yet.</p>{publisher}</section>'
     if status == "no_games_available":
         return '<section class="availability"><h2>No games available yet</h2><p>The current schedule document does not contain playable games yet. The monitor will continue checking automatically.</p></section>'
+    if status == "team_not_scheduled":
+        return '<section class="availability"><h2>Team not listed in current schedule</h2><p>The current schedule tables were validated, but none of the configured team aliases appears. The last known assignment is retained for reference. Calendar and email were not changed. This does not confirm a league-wide no-game day.</p></section>'
     return ""
 
 def _teams_view(history, season=None):

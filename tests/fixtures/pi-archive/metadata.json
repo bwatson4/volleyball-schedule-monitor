@@ -1,0 +1,2000 @@
+{
+  "archive_path": "/var/lib/volleyball-schedule-monitor/pdfs",
+  "history": {
+    "schedule_revision": [
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "detected_at": "2026-09-16T21:22:13.055505+00:00",
+        "source_url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/09/Adult-Indoor-Schedule-2024_2025_2026-Website-Schedule-2.pdf",
+        "parsed_at": "2026-09-16T21:51:31.767243+00:00",
+        "calendar_at": "2026-09-16T22:02:51.049320+00:00",
+        "email_at": "2026-09-16T22:02:52.830862+00:00",
+        "completed_at": "2026-09-16T22:02:52.893144+00:00"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "detected_at": "2026-09-22T04:43:23.221194+00:00",
+        "source_url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/09/Adult-Indoor-Schedule-2025_2026-Website-Schedule-120.pdf",
+        "parsed_at": "2026-09-22T13:41:32.054883+00:00",
+        "calendar_at": "2026-09-22T13:41:37.331772+00:00",
+        "email_at": "2026-09-22T13:41:39.406058+00:00",
+        "completed_at": "2026-09-22T13:41:39.462983+00:00"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "detected_at": "2026-09-23T04:52:53.825917+00:00",
+        "source_url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/09/Adult-Indoor-Schedule-2025_2026-Website-Schedule-122.pdf",
+        "parsed_at": "2026-09-23T04:52:59.131851+00:00",
+        "calendar_at": "2026-09-23T04:53:05.332902+00:00",
+        "email_at": "2026-09-23T04:53:07.201709+00:00",
+        "completed_at": "2026-09-23T04:53:07.263003+00:00"
+      },
+      {
+        "content_hash": "08b4ea1c09986bd02ad44aa08f6b90b54d65abe55ddffd24253cb427051ef1be",
+        "detected_at": "2026-09-30T17:39:19.801764+00:00",
+        "source_url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/09/Adult-Indoor-Schedule-2025_2026-Website-Schedule-125.pdf",
+        "parsed_at": null,
+        "calendar_at": null,
+        "email_at": null,
+        "completed_at": null
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "detected_at": "2026-10-05T18:47:28.072079+00:00",
+        "source_url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/10/Adult-Indoor-Schedule-2025_2026-Website-Schedule-129.pdf",
+        "parsed_at": "2026-10-05T18:47:33.451625+00:00",
+        "calendar_at": "2026-10-05T18:47:39.787082+00:00",
+        "email_at": "2026-10-05T18:47:41.506120+00:00",
+        "completed_at": "2026-10-05T18:47:41.563213+00:00"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "detected_at": "2026-10-06T13:44:23.095063+00:00",
+        "source_url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/10/Adult-Indoor-Schedule-2025_2026-Website-Schedule-132.pdf",
+        "parsed_at": "2026-10-06T13:44:28.443179+00:00",
+        "calendar_at": "2026-10-06T13:44:34.290635+00:00",
+        "email_at": "2026-10-06T13:44:35.798120+00:00",
+        "completed_at": "2026-10-06T13:44:35.861281+00:00"
+      },
+      {
+        "content_hash": "4b3823e479fbcc778d160739ccaf3b2f8723a321ad3068fbc6379a6ba7d94cf8",
+        "detected_at": "2026-10-13T01:20:12.692658+00:00",
+        "source_url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/10/Adult-Indoor-Schedule-2025_2026-Website-Schedule-135.pdf",
+        "parsed_at": null,
+        "calendar_at": null,
+        "email_at": null,
+        "completed_at": null
+      }
+    ],
+    "parsed_game": [
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "logical_id": "volleyball-schedule-monitor-20260916-chewblaccas-1",
+        "source_team": "Chewblaccas",
+        "game_date": "2026-09-16",
+        "start_time": "2026-09-16T20:30:00",
+        "end_time": "2026-09-16T22:00:00",
+        "gym": "KCS",
+        "pool": "D POOL",
+        "pool_position": "3",
+        "summary": "Chewblaccas Volleyball",
+        "season": "2026-27",
+        "rotation_matrix": null
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "logical_id": "volleyball-schedule-monitor-20260923-chewblockas-1",
+        "source_team": "Chewblockas",
+        "game_date": "2026-09-23",
+        "start_time": "2026-09-23T19:00:00",
+        "end_time": "2026-09-23T20:30:00",
+        "gym": "Pacway",
+        "pool": "D POOL",
+        "pool_position": "4",
+        "summary": "Chewblockas Volleyball",
+        "season": "2026-27",
+        "rotation_matrix": "[{\"round\": \"Game 1\", \"pairings\": [[1, 5], [2, 3]]}, {\"round\": \"Game 2\", \"pairings\": [[1, 4], [3, 5]]}, {\"round\": \"Game 3\", \"pairings\": [[1, 3], [2, 4]]}, {\"round\": \"Game 4\", \"pairings\": [[1, 2], [4, 5]]}, {\"round\": \"Game 5\", \"pairings\": [[3, 4], [2, 5]]}]"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "logical_id": "volleyball-schedule-monitor-20260923-chewblockas-1",
+        "source_team": "Chewblockas",
+        "game_date": "2026-09-23",
+        "start_time": "2026-09-23T19:00:00",
+        "end_time": "2026-09-23T20:30:00",
+        "gym": "Pacway",
+        "pool": "D POOL",
+        "pool_position": "4",
+        "summary": "Chewblockas Volleyball",
+        "season": "2026-27",
+        "rotation_matrix": "[{\"round\": \"Game 1\", \"pairings\": [[1, 5], [2, 3]]}, {\"round\": \"Game 2\", \"pairings\": [[1, 4], [3, 5]]}, {\"round\": \"Game 3\", \"pairings\": [[1, 3], [2, 4]]}, {\"round\": \"Game 4\", \"pairings\": [[1, 2], [4, 5]]}, {\"round\": \"Game 5\", \"pairings\": [[3, 4], [2, 5]]}]"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "logical_id": "volleyball-schedule-monitor-20261007-chewblockas-1",
+        "source_team": "Chewblockas",
+        "game_date": "2026-10-07",
+        "start_time": "2026-10-07T20:00:00",
+        "end_time": "2026-10-07T21:30:00",
+        "gym": "TCC",
+        "pool": "D POOL",
+        "pool_position": "3",
+        "summary": "Chewblockas Volleyball",
+        "season": "2026-27",
+        "rotation_matrix": "[{\"round\": \"Game 1\", \"pairings\": [[1, 5], [2, 3]]}, {\"round\": \"Game 2\", \"pairings\": [[1, 4], [3, 5]]}, {\"round\": \"Game 3\", \"pairings\": [[1, 3], [2, 4]]}, {\"round\": \"Game 4\", \"pairings\": [[1, 2], [4, 5]]}, {\"round\": \"Game 5\", \"pairings\": [[3, 4], [2, 5]]}]"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "logical_id": "volleyball-schedule-monitor-20261007-chewblockas-1",
+        "source_team": "Chewblockas",
+        "game_date": "2026-10-07",
+        "start_time": "2026-10-07T20:00:00",
+        "end_time": "2026-10-07T21:30:00",
+        "gym": "TCC",
+        "pool": "D POOL",
+        "pool_position": "3",
+        "summary": "Chewblockas Volleyball",
+        "season": "2026-27",
+        "rotation_matrix": "[{\"round\": \"Game 1\", \"pairings\": [[1, 5], [2, 3]]}, {\"round\": \"Game 2\", \"pairings\": [[1, 4], [3, 5]]}, {\"round\": \"Game 3\", \"pairings\": [[1, 3], [2, 4]]}, {\"round\": \"Game 4\", \"pairings\": [[1, 2], [4, 5]]}, {\"round\": \"Game 5\", \"pairings\": [[3, 4], [2, 5]]}]"
+      }
+    ],
+    "parsed_pool_team": [
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "the volleybrawlers",
+        "display_name": "The VolleyBrawlers",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "setting ducks",
+        "display_name": "Setting Ducks",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "bet on the net",
+        "display_name": "Bet on the Net",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "ace holes",
+        "display_name": "Ace Holes",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "volley ballers",
+        "display_name": "Volley Ballers",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "watch my 6",
+        "display_name": "Watch My 6",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "smash or pass",
+        "display_name": "Smash or Pass",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "bit tipsy",
+        "display_name": "Bit Tipsy",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "play to win",
+        "display_name": "Play to Win",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "bumpernickels",
+        "display_name": "Bumpernickels",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "set destroyers",
+        "display_name": "Set Destroyers",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "schanzenblocks",
+        "display_name": "Schanzenblocks",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "no non sets",
+        "display_name": "No Non Sets",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "smash bros",
+        "display_name": "Smash Bros",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "id hit that",
+        "display_name": "I'd Hit That",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "block busters",
+        "display_name": "Block Busters",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "back seat sets",
+        "display_name": "Back Seat Sets",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "chewblaccas",
+        "display_name": "Chewblaccas",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "to kill a rocking serve",
+        "display_name": "To Kill A Rocking Serve",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "spikeachu",
+        "display_name": "Spikeachu",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "valleypaulers",
+        "display_name": "Valleypaulers",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "setsy 3 0",
+        "display_name": "Setsy 3.0",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "nice tips",
+        "display_name": "Nice Tips",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "safe sets",
+        "display_name": "Safe Sets",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "serves you right",
+        "display_name": "Serves You Right",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "thin blue line",
+        "display_name": "Thin Blue Line",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "spike up your life",
+        "display_name": "Spike Up Your Life",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "leisure athletes",
+        "display_name": "Leisure Athletes",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "holy blockamole",
+        "display_name": "Holy Blockamole",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+        "game_date": "2026-09-16",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "net win",
+        "display_name": "Net Win",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "serves you right",
+        "display_name": "Serves You Right",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "block busters",
+        "display_name": "Block Buster",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "back seat sets",
+        "display_name": "Back Seat Sets",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "chewblockas",
+        "display_name": "Chewblockas",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "thin blue line",
+        "display_name": "Thin Blue Line",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "net win",
+        "display_name": "Net Win",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "the volleybrawlers",
+        "display_name": "The VolleyBrawlers",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "setting ducks",
+        "display_name": "Setting Ducks",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "bet on the net",
+        "display_name": "Bet on the Net",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "volley ballers",
+        "display_name": "Volley Ballers",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "watch my 6",
+        "display_name": "Watch my 6",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "smash or pass",
+        "display_name": "Smash Or Pass",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "bumpernickels",
+        "display_name": "Bumpernickels",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "bit tipsy",
+        "display_name": "Bit Tipsy",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "schanzenblocks",
+        "display_name": "Schanzenblocks",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "two bump chumps",
+        "display_name": "Two Bump Chumps",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "block party",
+        "display_name": "Block Party",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "underdogs",
+        "display_name": "Underdogs",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "deez netz",
+        "display_name": "Deez Netz",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "just the tip",
+        "display_name": "Just the Tip",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "to kill a rocking serve",
+        "display_name": "To Kill A Rocking Serve",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "spike up your life",
+        "display_name": "Spike Up Your Life",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "leisure athletes",
+        "display_name": "Leisure Athlete",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "holy blockamole",
+        "display_name": "Holy Blockamole",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "ace holes",
+        "display_name": "Ace Holes",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "play to win",
+        "display_name": "Play to Win",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "set destroyers",
+        "display_name": "Set Destroyers",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "id hit that",
+        "display_name": "I'd Hit That",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "no non sets",
+        "display_name": "No Non Sets",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "nice tips",
+        "display_name": "Nice Tips",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "roadrunners",
+        "display_name": "Roadrunners",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "spike wazowski",
+        "display_name": "Spike Wazowski",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "fire attack",
+        "display_name": "Fire Attack",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "court ordered community service",
+        "display_name": "Court Ordered Community Service",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "notorious d i g",
+        "display_name": "Notorious D.I.G.",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "smash bros",
+        "display_name": "Smash bros",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "valleypaulers",
+        "display_name": "VolleyPaulers",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "safe sets",
+        "display_name": "Safe Sets",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "setsy 3 0",
+        "display_name": "Setsy 3.0",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "spikeachu",
+        "display_name": "Spikeachu",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "serves you right",
+        "display_name": "Serves You Right",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "block busters",
+        "display_name": "Block Buster",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "back seat sets",
+        "display_name": "Back Seat Sets",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "chewblaccas",
+        "display_name": "Chewblockas",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "thin blue line",
+        "display_name": "Thin Blue Line",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "net win",
+        "display_name": "Net Win",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "the volleybrawlers",
+        "display_name": "The VolleyBrawlers",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "setting ducks",
+        "display_name": "Setting Ducks",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "bet on the net",
+        "display_name": "Bet on the Net",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "volley ballers",
+        "display_name": "Volley Ballers",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "watch my 6",
+        "display_name": "Watch my 6",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "smash or pass",
+        "display_name": "Smash Or Pass",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "bumpernickels",
+        "display_name": "Bumpernickels",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "bit tipsy",
+        "display_name": "Bit Tipsy",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "schanzenblocks",
+        "display_name": "Schanzenblocks",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "two bump chumps",
+        "display_name": "Two Bump Chumps",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "block party",
+        "display_name": "Block Party",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "underdogs",
+        "display_name": "Underdogs",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "deez netz",
+        "display_name": "Deez Netz",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "just the tip",
+        "display_name": "Just the Tip",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "to kill a rocking serve",
+        "display_name": "To Kill A Rocking Serve",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "spike up your life",
+        "display_name": "Spike Up Your Life",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "leisure athletes",
+        "display_name": "Leisure Athlete",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "holy blockamole",
+        "display_name": "Holy Blockamole",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "ace holes",
+        "display_name": "Ace Holes",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "play to win",
+        "display_name": "Play to Win",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "set destroyers",
+        "display_name": "Set Destroyers",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "id hit that",
+        "display_name": "I'd Hit That",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "no non sets",
+        "display_name": "No Non Sets",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "nice tips",
+        "display_name": "Nice Tips",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "roadrunners",
+        "display_name": "Roadrunners",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "spike wazowski",
+        "display_name": "Spike Wazowski",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "fire attack",
+        "display_name": "Fire Attack",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "court ordered community service",
+        "display_name": "Court Ordered Community Service",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "notorious d i g",
+        "display_name": "Notorious D.I.G.",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "smash bros",
+        "display_name": "Smash bros",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "valleypaulers",
+        "display_name": "VolleyPaulers",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "safe sets",
+        "display_name": "Safe Sets",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "setsy 3 0",
+        "display_name": "Setsy 3.0",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+        "game_date": "2026-09-23",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "spikeachu",
+        "display_name": "Spikeachu",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "to kill a rocking serve",
+        "display_name": "To Kill A Rocking Serve",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "volley ballers",
+        "display_name": "Volley Ballers",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "bet on the net",
+        "display_name": "Bet on the Net",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "net win",
+        "display_name": "Net Win",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "block party",
+        "display_name": "Block Party",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "thin blue line",
+        "display_name": "Thin Blue Line",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "spike up your life",
+        "display_name": "Spike Up Your Life",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "leisure athletes",
+        "display_name": "Leisure Athlete",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "holy blockamole",
+        "display_name": "Holy Blockamole",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "the volleybrawlers",
+        "display_name": "The VolleyBrawlers",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "just the tip",
+        "display_name": "Just the Tip",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "notorious d i g",
+        "display_name": "Notorious D.I.G.",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "fire attack",
+        "display_name": "Fire Attack",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "roadrunners",
+        "display_name": "Roadrunners",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "spike wazowski",
+        "display_name": "Spike Wazowski",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "watch my 6",
+        "display_name": "Watch my 6",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "smash or pass",
+        "display_name": "Smash or Pass",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "schanzenblocks",
+        "display_name": "Schanzenblocks",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "bumpernickels",
+        "display_name": "Bumpernickels",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "set destroyers",
+        "display_name": "Set Destroyer",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "bit tipsy",
+        "display_name": "Bit Tipsy",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "nice tips",
+        "display_name": "Nice Tips",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "no non sets",
+        "display_name": "No Non Sets",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "id hit that",
+        "display_name": "I'd Hit that",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "volley pauls",
+        "display_name": "Volley Pauls",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "smash bros",
+        "display_name": "Smash bros",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "serves you right",
+        "display_name": "Serves You Right",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "chewblaccas",
+        "display_name": "Chewblockas",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "block busters",
+        "display_name": "Block Buster",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "ace holes",
+        "display_name": "Ace Holes",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "play 2 win",
+        "display_name": "Play 2 Win",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "spikeachu",
+        "display_name": "Spikeachu",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "setsy",
+        "display_name": "Setsy",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "safe sets",
+        "display_name": "Safe Sets",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "back seat sets",
+        "display_name": "Back Seat Sets",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "setting ducks",
+        "display_name": "Setting Ducks",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "deez nuts",
+        "display_name": "Deez Nuts",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "underdogs",
+        "display_name": "Underdogs",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "2 bump chumps",
+        "display_name": "2 Bump Chumps",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "court ordered community service",
+        "display_name": "Court Ordered Community Service",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "to kill a rocking serve",
+        "display_name": "To Kill A Rocking Serve",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "volley ballers",
+        "display_name": "Volley Ballers",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "bet on the net",
+        "display_name": "Bet on the Net",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "net win",
+        "display_name": "Net Win",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "F POOL",
+        "team_normalized": "block party",
+        "display_name": "Block Party",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "setting ducks",
+        "display_name": "Setting Ducks",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "deez nets",
+        "display_name": "Deez Nets",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "underdogs",
+        "display_name": "Underdogs",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "two bump chumps",
+        "display_name": "2 Bump Chumps",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "G POOL",
+        "team_normalized": "court ordered community service",
+        "display_name": "Court Ordered Community Service",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "just the tip",
+        "display_name": "Just the Tip",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "notorious d i g",
+        "display_name": "Notorious D.I.G.",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "fire attack",
+        "display_name": "Fire Attack",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "roadrunners",
+        "display_name": "Roadrunners",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "H POOL",
+        "team_normalized": "spike wazowski",
+        "display_name": "Spike Wazowski",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "watch my 6",
+        "display_name": "Watch my 6",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "smash or pass",
+        "display_name": "Smash or Pass",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "schanzenblocks",
+        "display_name": "Schanzenblocks",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "bumpernickels",
+        "display_name": "Bumpernickels",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "A POOL",
+        "team_normalized": "set destroyers",
+        "display_name": "Set Destroyer",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "bit tipsy",
+        "display_name": "Bit Tipsy",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "nice tips",
+        "display_name": "Nice Tips",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "no non sets",
+        "display_name": "No Non Sets",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "id hit that",
+        "display_name": "I'd Hit that",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "B POOL",
+        "team_normalized": "valleypaulers",
+        "display_name": "Volley Pauls",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "smash bros",
+        "display_name": "Smash bros",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "serves you right",
+        "display_name": "Serves You Right",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "chewblaccas",
+        "display_name": "Chewblockas",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "block busters",
+        "display_name": "Block Buster",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "D POOL",
+        "team_normalized": "ace holes",
+        "display_name": "Ace Holes",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "play to win",
+        "display_name": "Play 2 Win",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "spikeachu",
+        "display_name": "Spikeachu",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "setsy 3 0",
+        "display_name": "Setsy",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "safe sets",
+        "display_name": "Safe Sets",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "C POOL",
+        "team_normalized": "back seat sets",
+        "display_name": "Back Seat Sets",
+        "pool_position": "5"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "thin blue line",
+        "display_name": "Thin Blue Line",
+        "pool_position": "1"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "spike up your life",
+        "display_name": "Spike Up Your Life",
+        "pool_position": "2"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "leisure athletes",
+        "display_name": "Leisure Athlete",
+        "pool_position": "3"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "holy blockamole",
+        "display_name": "Holy Blockamole",
+        "pool_position": "4"
+      },
+      {
+        "content_hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+        "game_date": "2026-10-07",
+        "season": "2026-27",
+        "pool": "E POOL",
+        "team_normalized": "the volleybrawlers",
+        "display_name": "The VolleyBrawlers",
+        "pool_position": "5"
+      }
+    ]
+  },
+  "settings": {
+    "team_names": [
+      "Chewblockas",
+      "Chewblaccas"
+    ],
+    "gyms": [
+      "Pacway",
+      "KCS",
+      "TCC",
+      "OLPH",
+      "Valleyview"
+    ],
+    "schedule_match_text": "Wednesday"
+  },
+  "state": {
+    "candidate": {
+      "calendar": false,
+      "detected_at": "2026-10-13T01:20:12.692658+00:00",
+      "email": false,
+      "hash": "4b3823e479fbcc778d160739ccaf3b2f8723a321ad3068fbc6379a6ba7d94cf8",
+      "parse_failure_at": "2026-10-14T01:01:02.497180+00:00",
+      "parse_failure_message": "structured schedule document produced zero events for configured team aliases",
+      "parsed": false,
+      "pdf_path": "/var/lib/volleyball-schedule-monitor/pdfs/4b3823e479fbcc778d160739ccaf3b2f8723a321ad3068fbc6379a6ba7d94cf8.pdf",
+      "source_url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/10/Adult-Indoor-Schedule-2025_2026-Website-Schedule-135.pdf",
+      "unparsed": true
+    },
+    "completed": {
+      "at": "2026-10-06T13:44:35.861281+00:00",
+      "hash": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+      "source_url": "https://kvapack.ca/wp-content/uploads/sites/3620/2026/10/Adult-Indoor-Schedule-2025_2026-Website-Schedule-132.pdf"
+    },
+    "last_failure": {
+      "at": "2026-10-14T01:01:02.497409+00:00",
+      "message": "structured schedule document produced zero events for configured team aliases",
+      "stage": "parse"
+    }
+  },
+  "pdf_count": 21,
+  "pdfs": [
+    {
+      "filename": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606.pdf",
+      "sha256": "0038b9c3e8e4ab32da3f0dd47d701472ac5a90cb237d4d5fdacf0e37257c9606",
+      "bytes": 54819
+    },
+    {
+      "filename": "08b4ea1c09986bd02ad44aa08f6b90b54d65abe55ddffd24253cb427051ef1be.pdf",
+      "sha256": "08b4ea1c09986bd02ad44aa08f6b90b54d65abe55ddffd24253cb427051ef1be",
+      "bytes": 54403
+    },
+    {
+      "filename": "0ec36ab6037bb8dec0dcc57f2091cb9869bdb819997445474a1e12e31659b0a4.pdf",
+      "sha256": "0ec36ab6037bb8dec0dcc57f2091cb9869bdb819997445474a1e12e31659b0a4",
+      "bytes": 20112
+    },
+    {
+      "filename": "112f15b60941d320833a141129f22f11dea5353e45a365950f5d866313165923.pdf",
+      "sha256": "112f15b60941d320833a141129f22f11dea5353e45a365950f5d866313165923",
+      "bytes": 49320
+    },
+    {
+      "filename": "1a06d57ecb8f2c2d9f04f4054eb9fb6bdfdabac63b992451e345929ad71f00f9.pdf",
+      "sha256": "1a06d57ecb8f2c2d9f04f4054eb9fb6bdfdabac63b992451e345929ad71f00f9",
+      "bytes": 49414
+    },
+    {
+      "filename": "2ba4768e4cd67f1e1d038068c73cfb2084117b78515a353d593137bb08e2e3f7.pdf",
+      "sha256": "2ba4768e4cd67f1e1d038068c73cfb2084117b78515a353d593137bb08e2e3f7",
+      "bytes": 49355
+    },
+    {
+      "filename": "3a37adfcd4f214633a33e1ac106d3ba73230874b031b191c74f5560074de9d3e.pdf",
+      "sha256": "3a37adfcd4f214633a33e1ac106d3ba73230874b031b191c74f5560074de9d3e",
+      "bytes": 50428
+    },
+    {
+      "filename": "4b3823e479fbcc778d160739ccaf3b2f8723a321ad3068fbc6379a6ba7d94cf8.pdf",
+      "sha256": "4b3823e479fbcc778d160739ccaf3b2f8723a321ad3068fbc6379a6ba7d94cf8",
+      "bytes": 54872
+    },
+    {
+      "filename": "6d1e89814b8fb86a9e8de7f808de7a5b2e55a9ba978cc77061e7f0e8ccef781f.pdf",
+      "sha256": "6d1e89814b8fb86a9e8de7f808de7a5b2e55a9ba978cc77061e7f0e8ccef781f",
+      "bytes": 51365
+    },
+    {
+      "filename": "705051f0b0be0d304c23968f6fe9145ce468e9a9401b4ad7ec89283e695fe753.pdf",
+      "sha256": "705051f0b0be0d304c23968f6fe9145ce468e9a9401b4ad7ec89283e695fe753",
+      "bytes": 49428
+    },
+    {
+      "filename": "86d23a08637cbb20f809f044a73f2f5d2b49412f8b678d3122f43a59fec41dcd.pdf",
+      "sha256": "86d23a08637cbb20f809f044a73f2f5d2b49412f8b678d3122f43a59fec41dcd",
+      "bytes": 48479
+    },
+    {
+      "filename": "9be05905e14c77bb12245178006f7d7183a68b8c6e99f26f4419cc11b62c83fb.pdf",
+      "sha256": "9be05905e14c77bb12245178006f7d7183a68b8c6e99f26f4419cc11b62c83fb",
+      "bytes": 51802
+    },
+    {
+      "filename": "c0312257bb528f2a60000696eb6dcddb6140f1a69497e3cb5e182013cf754d2b.pdf",
+      "sha256": "c0312257bb528f2a60000696eb6dcddb6140f1a69497e3cb5e182013cf754d2b",
+      "bytes": 50617
+    },
+    {
+      "filename": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3.pdf",
+      "sha256": "c50f7a6dbb0adb93baf2f20da906285ff356748b7171c9127957a4e3e83a50b3",
+      "bytes": 54867
+    },
+    {
+      "filename": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56.pdf",
+      "sha256": "cdd2e30e474caf8a33276da7a74791f55b0e05bc96b0f67e448bf4b57f9c6a56",
+      "bytes": 55465
+    },
+    {
+      "filename": "d5a4b4a61422a021226b70cfd6abfa9e2a845557d5a8e4a4286f92d72525c8c4.pdf",
+      "sha256": "d5a4b4a61422a021226b70cfd6abfa9e2a845557d5a8e4a4286f92d72525c8c4",
+      "bytes": 18074
+    },
+    {
+      "filename": "de00b75017429f053213810b6db6dd42af1efff688c9336a43ce818c79bc63e8.pdf",
+      "sha256": "de00b75017429f053213810b6db6dd42af1efff688c9336a43ce818c79bc63e8",
+      "bytes": 51967
+    },
+    {
+      "filename": "defc9d1e2ca85ebe074ea29b13906bf40626d4dff79e72119fa1043db6c3d68e.pdf",
+      "sha256": "defc9d1e2ca85ebe074ea29b13906bf40626d4dff79e72119fa1043db6c3d68e",
+      "bytes": 50886
+    },
+    {
+      "filename": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a.pdf",
+      "sha256": "e981eef05e5e07e913c9e780ddc417ae950fb14da98164f76348651b9568989a",
+      "bytes": 55752
+    },
+    {
+      "filename": "ee8c35bd1ff0e025074f13b4853e964db0317103caac584d3bd92757904dc88e.pdf",
+      "sha256": "ee8c35bd1ff0e025074f13b4853e964db0317103caac584d3bd92757904dc88e",
+      "bytes": 48479
+    },
+    {
+      "filename": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9.pdf",
+      "sha256": "ef8ce401db876eef9e111f108b82996e10b30a64cfdea35e27aa0a2914c9fea9",
+      "bytes": 58325
+    }
+  ]
+}

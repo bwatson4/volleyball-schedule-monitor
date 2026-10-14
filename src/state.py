@@ -73,6 +73,26 @@ class ScheduleState:
         if not previous or previous.get("stage") in {"website/download", "schedule/discovery"}:
             self.data["last_failure"] = failure
         self.save()
+    def team_not_scheduled(self, source_url, digest, schedule_date):
+        """Observe a validated team-absent table without reconciling an empty list.
+
+        Keep the revision retryable for alias/parser changes and preserve the
+        last event-bearing parse/completion timestamps and known-good schedule.
+        """
+        observed_at = now()
+        self.data["last_successful_check"] = observed_at
+        self.data["schedule_availability"] = {
+            "status": "team_not_scheduled", "source_url": source_url,
+            "content_hash": digest, "schedule_date": schedule_date,
+            "observed_at": observed_at,
+        }
+        candidate = self.data.get("candidate", {})
+        if candidate.get("hash") == digest:
+            candidate["classification"] = "team_not_scheduled"
+            for key in ("unparsed", "parse_failure_at", "parse_failure_message"):
+                candidate.pop(key, None)
+        self._clear_failure("parse")
+        self.save()
     def begin_candidate(self, digest, pdf_path, source_url):
         candidate = self.data.get("candidate", {})
         if candidate.get("hash") != digest:
@@ -102,6 +122,7 @@ class ScheduleState:
     def mark_stage(self, stage, value=True):
         self.data["candidate"][stage] = value
         if stage == "parsed":
+            self.data["candidate"].pop("classification", None)
             self.data["candidate"].pop("unparsed", None)
             self.data["candidate"].pop("parse_failure_at", None)
             self.data["candidate"].pop("parse_failure_message", None)
